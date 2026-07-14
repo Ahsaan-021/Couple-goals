@@ -1,0 +1,197 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
+import { Status, Schedule, PartnerStatus } from '@/types'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import StatusSelector from '@/components/StatusSelector'
+import ScheduleManager from '@/components/ScheduleManager'
+import PartnerCard from '@/components/PartnerCard'
+import Link from 'next/link'
+import { Heart, MessageCircle, Sparkles, Clock } from 'lucide-react'
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse-soft">
+      <div className="h-8 w-48 bg-gray-200 rounded-lg" />
+      <div className="h-4 w-32 bg-gray-100 rounded-lg" />
+      <div className="h-32 bg-white/50 rounded-2xl" />
+      <div className="h-48 bg-white/50 rounded-2xl" />
+      <div className="h-64 bg-white/50 rounded-2xl" />
+    </div>
+  )
+}
+
+export default function DashboardPage() {
+  const { user, profile } = useAuth()
+  const [status, setStatus] = useState<Status | null>(null)
+  const [schedules, setSchedules] = useState<Schedule[]>([])
+  const [partner, setPartner] = useState<PartnerStatus | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const partnerPhone = process.env.NEXT_PUBLIC_PARTNER_PHONE
+
+  const loadPartner = async (partnerId: string) => {
+    const { data: partnerData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', partnerId)
+      .single()
+
+    if (partnerData) {
+      const { data: partnerStatus } = await supabase
+        .from('statuses')
+        .select('*')
+        .eq('user_id', partnerData.id)
+        .maybeSingle()
+
+      setPartner({
+        profile: partnerData,
+        status: partnerStatus,
+        is_online: false,
+      })
+    } else {
+      setPartner(null)
+    }
+  }
+
+  useEffect(() => {
+    if (!user) return
+    ;(async () => {
+      const [statusRes, scheduleRes, profileRes] = await Promise.all([
+        supabase.from('statuses').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('schedules').select('*').eq('user_id', user.id).order('day_of_week'),
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
+      ])
+
+      if (statusRes.data) setStatus(statusRes.data)
+      if (scheduleRes.data) setSchedules(scheduleRes.data)
+
+      const myProfile = profileRes.data
+      if (myProfile?.partner_id) {
+        await loadPartner(myProfile.partner_id)
+      }
+      setLoading(false)
+    })()
+  }, [user])
+
+  /* ── Real-time subscriptions ── */
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel('dashboard-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'statuses', filter: `user_id=eq.${user.id}` }, (payload) => {
+        setStatus(payload.new as Status)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'statuses' }, (payload) => {
+        const s = payload.new as Status
+        setPartner((prev) => {
+          if (!prev || s.user_id !== prev.profile.id) return prev
+          return { ...prev, status: s }
+        })
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, (payload) => {
+        const p = payload.new as any
+        if (p.partner_id) loadPartner(p.partner_id)
+        else setPartner(null)
+      })
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [user])
+
+  const handleStatusUpdate = async (reasonStatus?: string, emotionalStatus?: string, customReason?: string) => {
+    if (!user) return
+    const updates: any = { user_id: user.id, updated_at: new Date().toISOString() }
+    if (reasonStatus) updates.reason_status = reasonStatus
+    if (emotionalStatus) updates.emotional_status = emotionalStatus
+    if (customReason !== undefined) updates.custom_reason = customReason
+    const { data } = await supabase.from('statuses').upsert(updates, { onConflict: 'user_id' }).select().single()
+    if (data) setStatus(data)
+  }
+
+  const openWhatsApp = () => {
+    if (partnerPhone) window.open(`https://wa.me/${partnerPhone}`, '_blank')
+  }
+
+  if (loading) return <DashboardSkeleton />
+
+  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+
+  return (
+    <div className="space-y-5 max-w-3xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
+            Hello, {profile?.name?.split(' ')[0] || 'there'}
+            <Sparkles className="w-5 h-5 text-amber-400" />
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5">{today}</p>
+        </div>
+        {partnerPhone && (
+          <Button variant="outline" size="sm" onClick={openWhatsApp} className="shrink-0">
+            <MessageCircle className="w-4 h-4 mr-1.5 text-green-500" />
+            Send to Partner
+          </Button>
+        )}
+      </div>
+
+      {!profile?.partner_id && (
+        <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200/50 p-4 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+            <Heart className="w-4 h-4 text-amber-500" />
+          </div>
+          <p className="text-sm text-amber-700">
+            Connect with your partner in{' '}
+            <Link href="/dashboard/settings" className="font-semibold underline underline-offset-2 hover:text-amber-800">
+              Settings
+            </Link>{' '}
+            to share status and memories.
+          </p>
+        </div>
+      )}
+
+      {partner && (
+        <div className="animate-slide-up">
+          <PartnerCard partner={partner} />
+        </div>
+      )}
+
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center">
+              <Heart className="w-3.5 h-3.5 text-rose-500" />
+            </span>
+            How are you feeling?
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <StatusSelector
+            currentReason={status?.reason_status}
+            currentEmotional={status?.emotional_status}
+            currentCustomReason={status?.custom_reason}
+            onUpdate={handleStatusUpdate}
+          />
+        </CardContent>
+      </Card>
+
+      <Card className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center">
+              <Clock className="w-3.5 h-3.5 text-rose-500" />
+            </span>
+            Weekly Schedule
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScheduleManager schedules={schedules} onSchedulesChange={setSchedules} />
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

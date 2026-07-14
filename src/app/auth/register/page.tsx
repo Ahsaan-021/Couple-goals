@@ -1,0 +1,142 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Heart, Loader2, CheckCircle } from 'lucide-react'
+
+export default function RegisterPage() {
+  const router = useRouter()
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    const { data, error: err } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+      },
+    })
+
+    if (err) {
+      setError(err.message)
+      setLoading(false)
+      return
+    }
+
+    if (data.session) {
+      router.push('/dashboard')
+    } else {
+      setSuccess(true)
+    }
+    setLoading(false)
+  }
+
+  if (success) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="w-full max-w-sm text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800">Check your email</h1>
+          <p className="text-sm text-gray-500 mt-2">
+            We sent a confirmation link to <strong className="text-gray-700">{email}</strong>
+          </p>
+          <Link href="/auth/login">
+            <Button variant="outline" className="mt-6">Back to Sign In</Button>
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#fdf2f0] via-white to-[#fef6f5]">
+      <div className="w-full max-w-sm animate-fade-in">
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center mx-auto mb-4 shadow-sm">
+            <Heart className="w-7 h-7 text-rose-500" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-800">Create your space</h1>
+          <p className="text-sm text-gray-500 mt-1">A private world for two</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-border/50 p-6">
+          <form onSubmit={handleRegister} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Your Name</Label>
+              <Input
+                id="name"
+                placeholder="Alex"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="h-11"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="h-11"
+              />
+              <p className="text-xs text-gray-400">At least 6 characters</p>
+            </div>
+
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 rounded-xl p-3 border border-red-100">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" className="w-full h-11" disabled={loading}>
+              {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              {loading ? 'Creating...' : 'Create Space'}
+            </Button>
+          </form>
+        </div>
+
+        <p className="text-center text-sm text-gray-500 mt-6">
+          Already have a space?{' '}
+          <Link href="/auth/login" className="text-rose-500 hover:text-rose-600 font-medium">
+            Sign in
+          </Link>
+        </p>
+      </div>
+    </div>
+  )
+}
