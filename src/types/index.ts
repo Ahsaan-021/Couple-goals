@@ -13,46 +13,27 @@ export interface Schedule {
   day_of_week: number
   start_time: string
   end_time: string
-  is_busy: boolean
+  is_busy: boolean | null
   label: string | null
+  created_at: string
 }
 
 export interface Status {
   id: string
   user_id: string
-  reason_status: ReasonStatus | null
-  emotional_status: EmotionalStatus | null
+  reason_status: string | null
+  emotional_status: string | null
   custom_reason: string | null
-  is_auto: boolean
+  is_auto: boolean | null
   updated_at: string
 }
-
-export type ReasonStatus =
-  | 'working'
-  | 'busy'
-  | 'traveling'
-  | 'resting'
-  | 'meeting'
-  | 'focusing'
-  | 'commuting'
-  | 'available'
-
-export type EmotionalStatus =
-  | 'low_energy'
-  | 'need_space'
-  | 'miss_you'
-  | 'feeling_good'
-  | 'stressed'
-  | 'grateful'
-  | 'loving'
-  | 'thoughtful'
 
 export interface Memory {
   id: string
   user_id: string
   content: string
   image_url: string | null
-  media_type: 'text' | 'image' | 'video'
+  media_type: string | null
   created_at: string
 }
 
@@ -68,8 +49,18 @@ export interface Message {
   receiver_id: string
   content: string
   media_url: string | null
-  media_type: 'text' | 'image' | 'video'
-  is_one_time: boolean
+  media_type: string | null
+  is_one_time: boolean | null
   viewed_at: string | null
+  created_at: string
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  type: 'media_shared' | 'status_update' | 'memory_added' | 'partner_connected'
+  title: string
+  body: string
+  read: boolean
   created_at: string
 }

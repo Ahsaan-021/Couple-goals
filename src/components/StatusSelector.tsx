@@ -3,28 +3,28 @@
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
-import { Pencil } from 'lucide-react'
+import { Pencil, Briefcase, Zap, Car, Coffee, ClipboardList, Target, Train, CheckCircle, BatteryLow, Wind, Heart, Sparkles, AlertTriangle, Sun, BrainCircuit } from 'lucide-react'
 
 const reasons = [
-  { value: 'working', label: 'Working', icon: '💼' },
-  { value: 'busy', label: 'Busy', icon: '⚡' },
-  { value: 'traveling', label: 'Traveling', icon: '🚗' },
-  { value: 'resting', label: 'Resting', icon: '😌' },
-  { value: 'meeting', label: 'Meeting', icon: '📋' },
-  { value: 'focusing', label: 'Focusing', icon: '🎯' },
-  { value: 'commuting', label: 'Commuting', icon: '🚇' },
-  { value: 'available', label: 'Available', icon: '🙌' },
+  { value: 'working', label: 'Working', icon: Briefcase },
+  { value: 'busy', label: 'Busy', icon: Zap },
+  { value: 'traveling', label: 'Traveling', icon: Car },
+  { value: 'resting', label: 'Resting', icon: Coffee },
+  { value: 'meeting', label: 'Meeting', icon: ClipboardList },
+  { value: 'focusing', label: 'Focusing', icon: Target },
+  { value: 'commuting', label: 'Commuting', icon: Train },
+  { value: 'available', label: 'Available', icon: CheckCircle },
 ]
 
 const emotions = [
-  { value: 'low_energy', label: 'Low energy', icon: '😴' },
-  { value: 'need_space', label: 'Need space', icon: '🌿' },
-  { value: 'miss_you', label: 'Miss you', icon: '💕' },
-  { value: 'feeling_good', label: 'Feeling good', icon: '✨' },
-  { value: 'stressed', label: 'Stressed', icon: '😰' },
-  { value: 'grateful', label: 'Grateful', icon: '🙏' },
-  { value: 'loving', label: 'Loving', icon: '🥰' },
-  { value: 'thoughtful', label: 'Thoughtful', icon: '🤔' },
+  { value: 'low_energy', label: 'Low energy', icon: BatteryLow },
+  { value: 'need_space', label: 'Need space', icon: Wind },
+  { value: 'miss_you', label: 'Miss you', icon: Heart },
+  { value: 'feeling_good', label: 'Feeling good', icon: Sparkles },
+  { value: 'stressed', label: 'Stressed', icon: AlertTriangle },
+  { value: 'grateful', label: 'Grateful', icon: Sun },
+  { value: 'loving', label: 'Loving', icon: Heart },
+  { value: 'thoughtful', label: 'Thoughtful', icon: BrainCircuit },
 ]
 
 interface StatusSelectorProps {
@@ -98,7 +98,7 @@ export default function StatusSelector({
                   isLoading && 'opacity-50'
                 )}
               >
-                <span className={isLoading ? 'animate-pulse' : ''}>{r.icon}</span>
+                <span className={isLoading ? 'animate-pulse' : ''}><r.icon className="w-4 h-4" /></span>
                 {r.label}
               </button>
             )
@@ -144,7 +144,7 @@ export default function StatusSelector({
                   isLoading && 'opacity-50'
                 )}
               >
-                <span className={isLoading ? 'animate-pulse' : ''}>{e.icon}</span>
+                <span className={isLoading ? 'animate-pulse' : ''}><e.icon className="w-4 h-4" /></span>
                 {e.label}
               </button>
             )

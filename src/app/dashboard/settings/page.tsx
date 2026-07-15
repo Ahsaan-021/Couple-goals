@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Heart, Link2, Copy, Check, Loader2, UserPlus, Save, Settings } from 'lucide-react'
+import { Heart, Link2, Copy, Check, Loader2, UserPlus, Save, Settings, Shield } from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth()
@@ -55,17 +55,19 @@ export default function SettingsPage() {
       return
     }
 
-    if (data?.success) {
+    const result = data as { success?: boolean; partner_name?: string; error?: string } | null
+
+    if (result?.success) {
       await refreshProfile()
       setMessage({
-        text: data.partner_name
-          ? `Connected with ${data.partner_name}!`
+        text: result.partner_name
+          ? `Connected with ${result.partner_name}!`
           : 'Connected! You can now see each other\'s space.',
         type: 'success',
       })
       setPartnerCode('')
     } else {
-      setMessage({ text: data?.error || 'Connection failed', type: 'error' })
+      setMessage({ text: result?.error || 'Connection failed', type: 'error' })
     }
 
     setLinking(false)
@@ -117,6 +119,21 @@ export default function SettingsPage() {
                 Save
               </Button>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2.5 text-base">
+            <Shield className="w-4 h-4 text-neutral-400" />
+            Privacy & Security
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-xl bg-neutral-50 border border-neutral-200 p-4 text-sm text-neutral-600">
+            <p className="font-medium text-neutral-800 mb-1">End-to-end encrypted</p>
+            <p>Your messages, media, and shared moments are encrypted end-to-end. Only you and your partner can read them — not even we can access them.</p>
           </div>
         </CardContent>
       </Card>

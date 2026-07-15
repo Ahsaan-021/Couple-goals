@@ -47,7 +47,7 @@ export default function LandingPage() {
             <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center">
               <Heart className="w-4 h-4 text-white" fill="white" />
             </div>
-            <span className="font-semibold text-base text-neutral-900">Couple Goals</span>
+            <span className="font-semibold text-base text-neutral-900">Stay Connected</span>
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/auth/login">
@@ -70,14 +70,14 @@ export default function LandingPage() {
             </div>
 
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-6 text-neutral-900 text-balance">
-              Stay emotionally connected,{' '}
+              A platform to{' '}
               <span className="text-rose-500">
-                even on busy days
+                stay connected
               </span>
             </h1>
 
             <p className="text-lg md:text-xl text-neutral-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-              A private space for committed couples to share availability, emotions, and memories — without the noise of social media.
+              A private space for couples to share availability, emotions, and memories — without the noise of social media. Stay connected every moment.
             </p>
 
             <div className="flex items-center justify-center gap-3">
@@ -149,9 +149,9 @@ export default function LandingPage() {
         <footer className="max-w-6xl mx-auto px-6 py-12 text-center text-sm text-neutral-400 border-t border-gray-100">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Heart className="w-4 h-4 text-neutral-300" />
-            <span className="text-neutral-500">Couple Goals</span>
+            <span className="text-neutral-500">Stay Connected</span>
           </div>
-          <p>A private space for two.</p>
+          <p>A platform to stay connected. End-to-end encrypted.</p>
         </footer>
       </main>
     </div>

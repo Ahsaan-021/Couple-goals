@@ -3,8 +3,8 @@ import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 
 export const metadata: Metadata = {
-  title: 'Couple Goals',
-  description: 'A private relationship support and memory platform for couples',
+  title: 'Stay Connected',
+  description: 'A platform to stay connected — a private space for couples',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

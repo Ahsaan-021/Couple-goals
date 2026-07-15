@@ -2,28 +2,28 @@
 
 import { PartnerStatus } from '@/types'
 import { Card, CardContent } from '@/components/ui/card'
-import { Heart, MessageSquareText } from 'lucide-react'
+import { Heart, MessageSquareText, Briefcase, Zap, Car, Coffee, ClipboardList, Target, Train, CheckCircle, BatteryLow, Wind, Sparkles, AlertTriangle, Sun, BrainCircuit } from 'lucide-react'
 
-const reasonLabels: Record<string, { label: string; icon: string; color: string }> = {
-  working: { label: 'Working', icon: '💼', color: 'bg-blue-50 border-blue-200' },
-  busy: { label: 'Busy', icon: '⚡', color: 'bg-orange-50 border-orange-200' },
-  traveling: { label: 'Traveling', icon: '🚗', color: 'bg-amber-50 border-amber-200' },
-  resting: { label: 'Resting', icon: '😌', color: 'bg-green-50 border-green-200' },
-  meeting: { label: 'In a meeting', icon: '📋', color: 'bg-purple-50 border-purple-200' },
-  focusing: { label: 'Focusing', icon: '🎯', color: 'bg-indigo-50 border-indigo-200' },
-  commuting: { label: 'Commuting', icon: '🚇', color: 'bg-gray-50 border-gray-200' },
-  available: { label: 'Available', icon: '🙌', color: 'bg-emerald-50 border-emerald-200' },
+const reasonLabels: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
+  working: { label: 'Working', icon: Briefcase, color: 'bg-blue-50 border-blue-200' },
+  busy: { label: 'Busy', icon: Zap, color: 'bg-orange-50 border-orange-200' },
+  traveling: { label: 'Traveling', icon: Car, color: 'bg-amber-50 border-amber-200' },
+  resting: { label: 'Resting', icon: Coffee, color: 'bg-green-50 border-green-200' },
+  meeting: { label: 'In a meeting', icon: ClipboardList, color: 'bg-purple-50 border-purple-200' },
+  focusing: { label: 'Focusing', icon: Target, color: 'bg-indigo-50 border-indigo-200' },
+  commuting: { label: 'Commuting', icon: Train, color: 'bg-gray-50 border-gray-200' },
+  available: { label: 'Available', icon: CheckCircle, color: 'bg-emerald-50 border-emerald-200' },
 }
 
-const emotionalLabels: Record<string, { label: string; icon: string }> = {
-  low_energy: { label: 'Low energy', icon: '😴' },
-  need_space: { label: 'Needs space', icon: '🌿' },
-  miss_you: { label: 'Misses you', icon: '💕' },
-  feeling_good: { label: 'Feeling good', icon: '✨' },
-  stressed: { label: 'Stressed', icon: '😰' },
-  grateful: { label: 'Grateful', icon: '🙏' },
-  loving: { label: 'Loving', icon: '🥰' },
-  thoughtful: { label: 'Thoughtful', icon: '🤔' },
+const emotionalLabels: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  low_energy: { label: 'Low energy', icon: BatteryLow },
+  need_space: { label: 'Needs space', icon: Wind },
+  miss_you: { label: 'Misses you', icon: Heart },
+  feeling_good: { label: 'Feeling good', icon: Sparkles },
+  stressed: { label: 'Stressed', icon: AlertTriangle },
+  grateful: { label: 'Grateful', icon: Sun },
+  loving: { label: 'Loving', icon: Heart },
+  thoughtful: { label: 'Thoughtful', icon: BrainCircuit },
 }
 
 interface PartnerCardProps {
@@ -62,13 +62,13 @@ export default function PartnerCard({ partner }: PartnerCardProps) {
           <div className="flex flex-wrap gap-2">
             {reason && (
               <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border ${reason.color}`}>
-                <span>{reason.icon}</span>
+                <reason.icon className="w-4 h-4" />
                 {reason.label}
               </span>
             )}
             {emotion && (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border bg-rose-50 border-rose-200/50 text-rose-700">
-                <span>{emotion.icon}</span>
+                <emotion.icon className="w-4 h-4" />
                 {emotion.label}
               </span>
             )}

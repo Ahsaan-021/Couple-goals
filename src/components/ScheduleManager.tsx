@@ -44,7 +44,7 @@ export default function ScheduleManager({ schedules, onSchedulesChange }: Schedu
   const updateSlot = async (id: string, field: string, value: string | boolean) => {
     const { data } = await supabase
       .from('schedules')
-      .update({ [field]: value })
+      .update({ [field]: value } as any)
       .eq('id', id)
       .select()
       .single()

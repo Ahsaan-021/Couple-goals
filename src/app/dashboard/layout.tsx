@@ -4,8 +4,9 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
+import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext'
 import { Button } from '@/components/ui/button'
-import { Heart, ImageIcon, BarChart3, Settings, LogOut, Menu, X, Home, MessageCircle } from 'lucide-react'
+import { Heart, ImageIcon, BarChart3, Settings, LogOut, Menu, X, Home, MessageCircle, ExternalLink } from 'lucide-react'
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
@@ -28,8 +29,9 @@ function LoadingSkeleton() {
   )
 }
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const { user, profile, loading, signOut } = useAuth()
+  const { unreadCount } = useNotifications()
   const router = useRouter()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -62,10 +64,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="w-8 h-8 rounded-lg bg-neutral-900 flex items-center justify-center">
                 <Heart className="w-4 h-4 text-white" fill="white" />
               </div>
-              <span className="font-semibold text-neutral-900 hidden sm:inline">Couple Goals</span>
+              <span className="font-semibold text-neutral-900 hidden sm:inline">Stay Connected</span>
             </Link>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <a
+              href="https://www.instagram.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-500 hover:text-rose-500 hover:bg-rose-50 transition-all"
+              title="Instagram"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            <a
+              href="https://wa.me/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-500 hover:text-emerald-500 hover:bg-emerald-50 transition-all"
+              title="WhatsApp"
+            >
+              <MessageCircle className="w-4 h-4" />
+            </a>
             <div className="hidden sm:flex items-center gap-2 text-sm text-neutral-500 bg-neutral-100 px-3 py-1.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
               {profile?.name || 'You'}
@@ -98,7 +118,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <item.icon className="w-4 h-4" />
                 {item.label}
-                {pathname === item.href && (
+                {item.href === '/dashboard/chat' && unreadCount > 0 && (
+                  <span className="ml-auto flex items-center justify-center w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+                {pathname === item.href && item.href !== '/dashboard/chat' && (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-rose-400" />
                 )}
               </Link>
@@ -111,5 +136,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
     </div>
+  )
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <NotificationProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </NotificationProvider>
   )
 }

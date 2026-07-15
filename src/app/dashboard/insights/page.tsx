@@ -5,7 +5,29 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Memory, Status } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Heart, Camera, BookHeart, TrendingUp, ChevronLeft, ChevronRight, CalendarDays, Sparkles } from 'lucide-react'
+import { Heart, Camera, BookHeart, TrendingUp, ChevronLeft, ChevronRight, CalendarDays, Sparkles, Briefcase, Zap, Car, Coffee, ClipboardList, Target, Train, CheckCircle, BatteryLow, Wind, AlertTriangle, Sun, BrainCircuit } from 'lucide-react'
+
+const emotionIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  loving: Heart,
+  feeling_good: Sparkles,
+  grateful: Sun,
+  miss_you: Heart,
+  low_energy: BatteryLow,
+  need_space: Wind,
+  stressed: AlertTriangle,
+  thoughtful: BrainCircuit,
+}
+
+const reasonIcons: Record<string, React.ComponentType<{ className?: string }>> = {
+  working: Briefcase,
+  busy: Zap,
+  traveling: Car,
+  resting: Coffee,
+  meeting: ClipboardList,
+  focusing: Target,
+  commuting: Train,
+  available: CheckCircle,
+}
 
 export default function InsightsPage() {
   const { user } = useAuth()
@@ -163,15 +185,11 @@ export default function InsightsPage() {
               <CardContent>
                 {emotionalTrend ? (
                   <div className="text-center py-2">
-                    <span className="text-3xl">
-                      {emotionalTrend === 'loving' && '🥰'}
-                      {emotionalTrend === 'feeling_good' && '✨'}
-                      {emotionalTrend === 'grateful' && '🙏'}
-                      {emotionalTrend === 'miss_you' && '💕'}
-                      {emotionalTrend === 'low_energy' && '😴'}
-                      {emotionalTrend === 'need_space' && '🌿'}
-                      {emotionalTrend === 'stressed' && '😰'}
-                      {emotionalTrend === 'thoughtful' && '🤔'}
+                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 text-rose-500 mb-2">
+                      {(() => {
+                        const Icon = emotionIcons[emotionalTrend]
+                        return Icon ? <Icon className="w-6 h-6" /> : null
+                      })()}
                     </span>
                     <p className="text-sm text-neutral-600 mt-1 capitalize">{emotionalTrend.replace(/_/g, ' ')}</p>
                   </div>
@@ -190,15 +208,11 @@ export default function InsightsPage() {
               <CardContent>
                 {currentStatus?.reason_status ? (
                   <div className="text-center py-2">
-                    <span className="text-3xl">
-                      {currentStatus.reason_status === 'working' && '💼'}
-                      {currentStatus.reason_status === 'busy' && '⚡'}
-                      {currentStatus.reason_status === 'traveling' && '🚗'}
-                      {currentStatus.reason_status === 'resting' && '😌'}
-                      {currentStatus.reason_status === 'meeting' && '📋'}
-                      {currentStatus.reason_status === 'focusing' && '🎯'}
-                      {currentStatus.reason_status === 'commuting' && '🚇'}
-                      {currentStatus.reason_status === 'available' && '🙌'}
+                    <span className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-rose-50 text-rose-500 mb-2">
+                      {(() => {
+                        const Icon = reasonIcons[currentStatus.reason_status!]
+                        return Icon ? <Icon className="w-6 h-6" /> : null
+                      })()}
                     </span>
                     <p className="text-sm text-neutral-600 mt-1 capitalize">{currentStatus.reason_status}</p>
                   </div>
