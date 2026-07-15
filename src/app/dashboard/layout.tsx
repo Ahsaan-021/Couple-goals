@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext'
 import { Button } from '@/components/ui/button'
-import { Heart, ImageIcon, BarChart3, Settings, LogOut, Menu, X, Home, MessageCircle, ExternalLink } from 'lucide-react'
+import { Heart, ImageIcon, BarChart3, Settings, LogOut, Menu, X, Home, MessageCircle } from 'lucide-react'
+import { FaInstagram, FaWhatsapp } from 'react-icons/fa'
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
@@ -75,7 +76,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-500 hover:text-rose-500 hover:bg-rose-50 transition-all"
               title="Instagram"
             >
-              <ExternalLink className="w-4 h-4" />
+              <FaInstagram className="w-4 h-4" />
             </a>
             <a
               href="https://wa.me/"
@@ -84,7 +85,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               className="w-9 h-9 rounded-xl bg-neutral-100 flex items-center justify-center text-neutral-500 hover:text-emerald-500 hover:bg-emerald-50 transition-all"
               title="WhatsApp"
             >
-              <MessageCircle className="w-4 h-4" />
+              <FaWhatsapp className="w-4 h-4" />
             </a>
             <div className="hidden sm:flex items-center gap-2 text-sm text-neutral-500 bg-neutral-100 px-3 py-1.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />

@@ -10,7 +10,7 @@ import StatusSelector from '@/components/StatusSelector'
 import ScheduleManager from '@/components/ScheduleManager'
 import PartnerCard from '@/components/PartnerCard'
 import Link from 'next/link'
-import { Heart, MessageCircle, Sparkles, Clock, ChevronRight } from 'lucide-react'
+import { Heart, MessageCircle, Sparkles, Clock, ChevronRight, StickyNote, Check, Loader2, Edit3 } from 'lucide-react'
 
 function DashboardSkeleton() {
   return (
@@ -30,6 +30,12 @@ export default function DashboardPage() {
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [partner, setPartner] = useState<PartnerStatus | null>(null)
   const [loading, setLoading] = useState(true)
+  const [noteContent, setNoteContent] = useState('')
+  const [noteId, setNoteId] = useState<string | null>(null)
+  const [noteLoading, setNoteLoading] = useState(false)
+  const [savingNote, setSavingNote] = useState(false)
+  const [noteSaved, setNoteSaved] = useState(false)
+  const [noteDirty, setNoteDirty] = useState(false)
 
   const partnerPhone = process.env.NEXT_PUBLIC_PARTNER_PHONE
 
@@ -60,19 +66,22 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return
     ;(async () => {
-      const [statusRes, scheduleRes, profileRes] = await Promise.all([
+      const [statusRes, scheduleRes, profileRes, noteRes] = await Promise.all([
         supabase.from('statuses').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('schedules').select('*').eq('user_id', user.id).order('day_of_week'),
         supabase.from('profiles').select('*').eq('id', user.id).single(),
+        supabase.from('notes').select('*').eq('user_id', user.id).maybeSingle(),
       ])
 
       if (statusRes.data) setStatus(statusRes.data)
       if (scheduleRes.data) setSchedules(scheduleRes.data)
+      if (noteRes.data) { setNoteContent(noteRes.data.content); setNoteId(noteRes.data.id) }
 
       const myProfile = profileRes.data
       if (myProfile?.partner_id) {
         await loadPartner(myProfile.partner_id)
       }
+      setNoteLoading(false)
       setLoading(false)
     })()
   }, [user])
@@ -110,6 +119,21 @@ export default function DashboardPage() {
     if (customReason !== undefined) updates.custom_reason = customReason
     const { data } = await supabase.from('statuses').upsert(updates, { onConflict: 'user_id' }).select().single()
     if (data) setStatus(data)
+  }
+
+  const saveNote = async () => {
+    if (!user || !noteContent.trim()) return
+    setSavingNote(true)
+    if (noteId) {
+      await supabase.from('notes').update({ content: noteContent.trim(), updated_at: new Date().toISOString() }).eq('id', noteId)
+    } else {
+      const { data } = await supabase.from('notes').insert({ user_id: user.id, content: noteContent.trim() }).select().single()
+      if (data) setNoteId(data.id)
+    }
+    setSavingNote(false)
+    setNoteSaved(true)
+    setNoteDirty(false)
+    setTimeout(() => setNoteSaved(false), 2000)
   }
 
   const openWhatsApp = () => {
@@ -161,24 +185,66 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2.5 text-base">
-            <span className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center">
-              <Heart className="w-3.5 h-3.5 text-rose-500" />
-            </span>
-            How are you feeling?
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <StatusSelector
-            currentReason={status?.reason_status}
-            currentEmotional={status?.emotional_status}
-            currentCustomReason={status?.custom_reason}
-            onUpdate={handleStatusUpdate}
-          />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2.5 text-base">
+              <span className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center">
+                <Heart className="w-3.5 h-3.5 text-rose-500" />
+              </span>
+              How are you feeling?
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <StatusSelector
+              currentReason={status?.reason_status}
+              currentEmotional={status?.emotional_status}
+              currentCustomReason={status?.custom_reason}
+              onUpdate={handleStatusUpdate}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2.5 text-base">
+              <span className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center">
+                <StickyNote className="w-3.5 h-3.5 text-rose-500" />
+              </span>
+              Personal Note
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <textarea
+                value={noteContent}
+                onChange={(e) => { setNoteContent(e.target.value); setNoteDirty(true); setNoteSaved(false) }}
+                placeholder="Write a quick note for yourself..."
+                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-rose-200 focus:ring-1 focus:ring-rose-200 transition-all resize-none h-24"
+                maxLength={500}
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-neutral-400">{noteContent.length}/500</p>
+                <Button
+                  size="sm"
+                  onClick={saveNote}
+                  disabled={savingNote || !noteContent.trim() || !noteDirty}
+                  className="transition-all"
+                >
+                  {savingNote ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : noteSaved ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
+                  <span className="ml-1.5">{noteSaved ? 'Saved' : 'Save Note'}</span>
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       <Card>
         <CardHeader className="pb-3">

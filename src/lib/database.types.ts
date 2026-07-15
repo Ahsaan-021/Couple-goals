@@ -125,32 +125,86 @@ export type Database = {
           },
         ]
       }
+      notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          age: number | null
           avatar_url: string | null
+          bio: string | null
           created_at: string
+          dob: string | null
+          gender: string | null
           id: string
           name: string
           pairing_code: string | null
+          pairing_code_created_by: string | null
           partner_id: string | null
         }
         Insert: {
+          age?: number | null
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          dob?: string | null
+          gender?: string | null
           id: string
           name?: string
           pairing_code?: string | null
+          pairing_code_created_by?: string | null
           partner_id?: string | null
         }
         Update: {
+          age?: number | null
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
+          dob?: string | null
+          gender?: string | null
           id?: string
           name?: string
           pairing_code?: string | null
+          pairing_code_created_by?: string | null
           partner_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_pairing_code_created_by_fkey"
+            columns: ["pairing_code_created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_partner_id_fkey"
             columns: ["partner_id"]
@@ -244,6 +298,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      disconnect_partner: { Args: never; Returns: Json }
       link_partner: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {

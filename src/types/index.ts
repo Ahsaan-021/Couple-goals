@@ -4,6 +4,11 @@ export interface Profile {
   name: string
   avatar_url: string | null
   pairing_code: string | null
+  pairing_code_created_by: string | null
+  gender: string | null
+  age: number | null
+  dob: string | null
+  bio: string | null
   created_at: string
 }
 
@@ -37,12 +42,6 @@ export interface Memory {
   created_at: string
 }
 
-export interface PartnerStatus {
-  profile: Profile
-  status: Status | null
-  is_online: boolean
-}
-
 export interface Message {
   id: string
   sender_id: string
@@ -53,6 +52,12 @@ export interface Message {
   is_one_time: boolean | null
   viewed_at: string | null
   created_at: string
+}
+
+export interface PartnerStatus {
+  profile: Profile
+  status: Status | null
+  is_online: boolean
 }
 
 export interface Notification {
