@@ -60,6 +60,23 @@ export interface PartnerStatus {
   is_online: boolean
 }
 
+export interface DisconnectRequest {
+  id: string
+  requester_id: string
+  requestee_id: string
+  status: 'pending' | 'approved' | 'rejected'
+  created_at: string
+}
+
+export interface Location {
+  id: string
+  user_id: string
+  latitude: number
+  longitude: number
+  name: string | null
+  updated_at: string
+}
+
 export interface Notification {
   id: string
   user_id: string

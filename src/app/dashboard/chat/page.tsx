@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Message, Profile } from '@/types'
 import { Button } from '@/components/ui/button'
-import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2 } from 'lucide-react'
+import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera } from 'lucide-react'
 
 function Lightbox({ message, onClose }: { message: Message; onClose: () => void }) {
   const isVideo = message.media_type === 'video'
@@ -334,6 +334,14 @@ export default function ChatPage() {
               title="Send video"
             >
               <Video className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => { if (fileRef.current) { fileRef.current.accept = 'image/*'; fileRef.current.capture = 'environment'; fileRef.current.click() } }}
+              className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
+              title="Take photo with camera"
+            >
+              <Camera className="w-4 h-4" />
             </button>
             <input ref={fileRef} type="file" onChange={handleFileSelect} className="hidden" />
 

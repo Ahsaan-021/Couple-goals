@@ -6,13 +6,14 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { NotificationProvider, useNotifications } from '@/contexts/NotificationContext'
 import { Button } from '@/components/ui/button'
-import { Heart, ImageIcon, BarChart3, Settings, LogOut, Menu, X, Home, MessageCircle } from 'lucide-react'
+import { Heart, ImageIcon, BarChart3, Settings, LogOut, Menu, X, Home, MessageCircle, MapPin } from 'lucide-react'
 import { FaInstagram, FaWhatsapp } from 'react-icons/fa'
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
   { href: '/dashboard/chat', label: 'Chat', icon: MessageCircle },
   { href: '/dashboard/memories', label: 'Memories', icon: ImageIcon },
+  { href: '/dashboard/location', label: 'Location', icon: MapPin },
   { href: '/dashboard/insights', label: 'Insights', icon: BarChart3 },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ]

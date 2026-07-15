@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Heart, Link2, Copy, Check, Loader2, UserPlus, Save, Settings, Shield, Camera, User, Trash2, AlertTriangle, X } from 'lucide-react'
+import { Heart, Link2, Copy, Check, Loader2, UserPlus, Save, Settings, Shield, Camera, User, Trash2, AlertTriangle, X, Bell } from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth()
@@ -25,6 +25,8 @@ export default function SettingsPage() {
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [disconnectRequest, setDisconnectRequest] = useState<{ id: string; requester_name: string } | null>(null)
+  const [pendingRequest, setPendingRequest] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -32,16 +34,21 @@ export default function SettingsPage() {
     if (profile?.bio) setBio(profile.bio)
     if (profile?.gender) setGender(profile.gender)
     if (profile?.age) setAge(profile.age.toString())
-    if (profile?.dob) setDob(profile.dob.split('T')[0])
+    if (profile?.dob) setDob(profile.dob?.split('T')[0] || '')
   }, [profile])
 
   useEffect(() => {
-    if (profile?.partner_id) {
-      supabase.from('profiles').select('name').eq('id', profile.partner_id).single().then(({ data }) => {
-        if (data) setPartnerName(data.name)
-      })
-    }
-  }, [profile?.partner_id])
+    if (!profile?.partner_id || !user?.id) return
+    supabase.from('profiles').select('name').eq('id', profile.partner_id).single().then(({ data }) => {
+      if (data) setPartnerName(data.name)
+    })
+    supabase.from('disconnect_requests').select('id, requester_id').eq('requestee_id', user.id).eq('status', 'pending').maybeSingle().then(async ({ data }) => {
+      if (data) {
+        const { data: requester } = await supabase.from('profiles').select('name').eq('id', data.requester_id).single()
+        setDisconnectRequest(requester ? { id: data.id, requester_name: requester.name } : null)
+      }
+    })
+  }, [profile?.partner_id, user?.id])
 
   const updateProfile = async () => {
     if (!user) return
@@ -118,10 +125,10 @@ export default function SettingsPage() {
     setTimeout(() => setMessage(null), 4000)
   }
 
-  const disconnectPartner = async () => {
+  const requestDisconnect = async () => {
     if (!user) return
     setDisconnecting(true)
-    const { data, error } = await supabase.rpc('disconnect_partner')
+    const { data, error } = await supabase.rpc('request_disconnect')
     if (error) {
       setMessage({ text: error.message, type: 'error' })
       setDisconnecting(false)
@@ -129,12 +136,39 @@ export default function SettingsPage() {
     }
     const result = data as { success?: boolean; partner_name?: string; error?: string } | null
     if (result?.success) {
-      await refreshProfile()
-      setPartnerName(null)
-      setMessage({ text: result.partner_name ? `Disconnected from ${result.partner_name}` : 'Disconnected', type: 'success' })
+      setMessage({ text: `Disconnect request sent to ${result.partner_name}. Waiting for their approval.`, type: 'success' })
     }
     setShowDisconnectConfirm(false)
     setDisconnecting(false)
+    setTimeout(() => setMessage(null), 5000)
+  }
+
+  const approveDisconnect = async () => {
+    if (!user) return
+    setDisconnecting(true)
+    const { error } = await supabase.rpc('approve_disconnect')
+    if (error) {
+      setMessage({ text: error.message, type: 'error' })
+      setDisconnecting(false)
+      return
+    }
+    await refreshProfile()
+    setPartnerName(null)
+    setDisconnectRequest(null)
+    setMessage({ text: 'Disconnected successfully', type: 'success' })
+    setDisconnecting(false)
+    setTimeout(() => setMessage(null), 4000)
+  }
+
+  const rejectDisconnect = async () => {
+    if (!user) return
+    const { error } = await supabase.rpc('reject_disconnect')
+    if (error) {
+      setMessage({ text: error.message, type: 'error' })
+      return
+    }
+    setDisconnectRequest(null)
+    setMessage({ text: 'Disconnect request rejected', type: 'success' })
     setTimeout(() => setMessage(null), 4000)
   }
 
@@ -284,24 +318,44 @@ export default function SettingsPage() {
                 <p className="text-sm text-emerald-600 mt-1">Connected with <strong>{partnerName}</strong></p>
               )}
               <p className="text-sm text-emerald-600 mt-1">You can see each other&apos;s status and memories.</p>
-              <div className="mt-4 flex gap-2 justify-center">
-                {!showDisconnectConfirm ? (
+
+              {disconnectRequest ? (
+                <div className="mt-4 p-4 rounded-xl bg-amber-50 border border-amber-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bell className="w-4 h-4 text-amber-500" />
+                    <p className="text-sm text-amber-700 font-medium">{disconnectRequest.requester_name} wants to disconnect</p>
+                  </div>
+                  <div className="flex gap-2 justify-center">
+                    <Button size="sm" variant="outline" onClick={rejectDisconnect} className="text-neutral-600">
+                      Keep Connected
+                    </Button>
+                    <Button size="sm" onClick={approveDisconnect} disabled={disconnecting} className="bg-red-500 hover:bg-red-600">
+                      {disconnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                      Approve Disconnect
+                    </Button>
+                  </div>
+                </div>
+              ) : showDisconnectConfirm ? (
+                <div className="mt-4">
+                  <p className="text-sm text-amber-600 mb-3">Send disconnect request to your partner. They must approve it.</p>
+                  <div className="flex gap-2 justify-center">
+                    <Button variant="outline" size="sm" onClick={() => setShowDisconnectConfirm(false)}>
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={requestDisconnect} disabled={disconnecting} className="bg-red-500 hover:bg-red-600">
+                      {disconnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />}
+                      Send Request
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-4 flex gap-2 justify-center">
                   <Button variant="outline" size="sm" onClick={() => setShowDisconnectConfirm(true)} className="text-red-500 border-red-200 hover:bg-red-50">
                     <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                     Disconnect
                   </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setShowDisconnectConfirm(false)}>
-                      Cancel
-                    </Button>
-                    <Button size="sm" onClick={disconnectPartner} disabled={disconnecting} className="bg-red-500 hover:bg-red-600">
-                      {disconnecting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <AlertTriangle className="w-3.5 h-3.5 mr-1.5" />}
-                      Confirm Disconnect
-                    </Button>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           ) : (
             <>

@@ -39,6 +39,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      disconnect_requests: {
+        Row: {
+          created_at: string
+          id: string
+          requestee_id: string
+          requester_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          requestee_id: string
+          requester_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          requestee_id?: string
+          requester_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disconnect_requests_requestee_id_fkey"
+            columns: ["requestee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disconnect_requests_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      locations: {
+        Row: {
+          id: string
+          latitude: number
+          longitude: number
+          name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          latitude: number
+          longitude: number
+          name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          latitude?: number
+          longitude?: number
+          name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "locations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       memories: {
         Row: {
           content: string
@@ -298,8 +372,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      approve_disconnect: { Args: never; Returns: Json }
       disconnect_partner: { Args: never; Returns: Json }
       link_partner: { Args: { p_code: string }; Returns: Json }
+      reject_disconnect: { Args: never; Returns: Json }
+      request_disconnect: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never
