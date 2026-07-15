@@ -33,18 +33,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#fdf2f0] via-white to-[#fef6f5]">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-white">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <Heart className="w-7 h-7 text-rose-500" />
+          <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-7 h-7 text-neutral-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Welcome back</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to your private space</p>
+          <h1 className="text-2xl font-bold text-neutral-900">Welcome back</h1>
+          <p className="text-sm text-neutral-500 mt-1">Sign in to your private space</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-border/50 p-6">
-          <form onSubmit={handleLogin} className="space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-6">
+          <form onSubmit={handleLogin} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -59,9 +59,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-              </div>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
@@ -86,7 +84,7 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-neutral-500 mt-6">
           Don&apos;t have a space yet?{' '}
           <Link href="/auth/register" className="text-rose-500 hover:text-rose-600 font-medium">
             Create one

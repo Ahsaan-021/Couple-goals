@@ -2,7 +2,7 @@
 
 import { PartnerStatus } from '@/types'
 import { Card, CardContent } from '@/components/ui/card'
-import { Heart, User, MessageSquareText } from 'lucide-react'
+import { Heart, MessageSquareText } from 'lucide-react'
 
 const reasonLabels: Record<string, { label: string; icon: string; color: string }> = {
   working: { label: 'Working', icon: '💼', color: 'bg-blue-50 border-blue-200' },
@@ -39,25 +39,27 @@ export default function PartnerCard({ partner }: PartnerCardProps) {
     : null
   const hasStatus = reason || emotion
 
+  const firstLetter = partner.profile.name?.charAt(0)?.toUpperCase() || 'P'
+
   return (
-    <Card className="bg-gradient-to-br from-rose-50/80 to-purple-50/80 border-rose-100/50 overflow-hidden">
+    <Card className="border-rose-100/50 overflow-hidden">
       <CardContent className="pt-5">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center shadow-sm">
-            <User className="w-5 h-5 text-rose-500" />
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 font-semibold text-lg">
+            {firstLetter}
           </div>
-          <div>
-            <p className="text-sm text-gray-400">Partner</p>
-            <h3 className="font-semibold text-gray-800">{partner.profile.name}</h3>
+          <div className="flex-1">
+            <p className="text-xs text-neutral-400 font-medium uppercase tracking-wider">Partner</p>
+            <h3 className="font-semibold text-neutral-900">{partner.profile.name}</h3>
           </div>
-          <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-400">
-            <span className="w-2 h-2 rounded-full bg-green-400" />
+          <div className="flex items-center gap-1.5 text-xs text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Online
           </div>
         </div>
 
         {hasStatus ? (
-          <div className="flex flex-wrap gap-2 mt-2">
+          <div className="flex flex-wrap gap-2">
             {reason && (
               <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border ${reason.color}`}>
                 <span>{reason.icon}</span>
@@ -65,23 +67,23 @@ export default function PartnerCard({ partner }: PartnerCardProps) {
               </span>
             )}
             {emotion && (
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border bg-white border-purple-200/50 text-purple-700">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border bg-rose-50 border-rose-200/50 text-rose-700">
                 <span>{emotion.icon}</span>
                 {emotion.label}
               </span>
             )}
           </div>
         ) : (
-          <p className="text-sm text-gray-400 italic flex items-center gap-2">
-            <Heart className="w-3.5 h-3.5 text-rose-300" />
+          <p className="text-sm text-neutral-400 flex items-center gap-2">
+            <Heart className="w-3.5 h-3.5 text-neutral-300" />
             No status shared yet
           </p>
         )}
 
         {partner.status?.custom_reason && (
-          <div className="mt-3 pt-3 border-t border-border/30 flex items-start gap-2">
-            <MessageSquareText className="w-3.5 h-3.5 text-gray-400 mt-0.5 shrink-0" />
-            <p className="text-sm text-gray-600 italic">&ldquo;{partner.status.custom_reason}&rdquo;</p>
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-start gap-2.5">
+            <MessageSquareText className="w-4 h-4 text-neutral-400 mt-0.5 shrink-0" />
+            <p className="text-sm text-neutral-600 italic">&ldquo;{partner.status.custom_reason}&rdquo;</p>
           </div>
         )}
       </CardContent>

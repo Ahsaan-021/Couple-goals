@@ -68,17 +68,17 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-border/50 p-5 shadow-sm space-y-3">
+    <form onSubmit={handleSubmit} className="bg-white rounded-2xl border border-gray-100 p-5 shadow-card space-y-3">
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="Write about a moment you want to remember..."
-        className="w-full min-h-[90px] rounded-xl border border-border/50 bg-gray-50/50 p-4 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:bg-white resize-none transition-all"
+        className="w-full min-h-[90px] rounded-xl border border-gray-200 bg-neutral-50/50 p-4 text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:bg-white resize-none transition-all"
       />
 
       {preview && fileType === 'image' && (
         <div className="relative inline-block">
-          <img src={preview} alt="Preview" className="h-24 object-cover rounded-xl border border-border/30" />
+          <img src={preview} alt="Preview" className="h-24 object-cover rounded-xl border border-gray-200" />
           <button
             type="button"
             onClick={() => { setFile(null); setPreview(null); setFileType(null) }}
@@ -91,7 +91,7 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
 
       {preview && fileType === 'video' && (
         <div className="relative inline-block">
-          <video src={preview} className="h-24 rounded-xl border border-border/30" controls />
+          <video src={preview} className="h-24 rounded-xl border border-gray-200" controls />
           <button
             type="button"
             onClick={() => { setFile(null); setPreview(null); setFileType(null) }}
@@ -109,7 +109,7 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
             onClick={() => {
               if (fileRef.current) { fileRef.current.accept = 'image/*'; fileRef.current.click() }
             }}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-rose-500 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-neutral-400 hover:text-rose-500 transition-colors"
           >
             <ImagePlus className="w-4 h-4" />
             Photo
@@ -119,7 +119,7 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
             onClick={() => {
               if (fileRef.current) { fileRef.current.accept = 'video/*'; fileRef.current.click() }
             }}
-            className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-rose-500 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-neutral-400 hover:text-rose-500 transition-colors"
           >
             <Video className="w-4 h-4" />
             Video

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Heart, Link2, Copy, Check, Loader2, UserPlus, Save } from 'lucide-react'
+import { Heart, Link2, Copy, Check, Loader2, UserPlus, Save, Settings } from 'lucide-react'
 
 export default function SettingsPage() {
   const { user, profile, refreshProfile } = useAuth()
@@ -81,19 +81,19 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-lg mx-auto">
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center shadow-sm">
-          <Heart className="w-5 h-5 text-rose-500" />
+        <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
+          <Settings className="w-5 h-5 text-rose-500" />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Settings</h1>
-          <p className="text-sm text-gray-400">Manage your private space</p>
+          <h1 className="text-xl font-bold text-neutral-900">Settings</h1>
+          <p className="text-sm text-neutral-400">Manage your private space</p>
         </div>
       </div>
 
       {message && (
-        <div className={`rounded-xl p-3 text-sm border animate-slide-down ${
+        <div className={`rounded-xl p-3.5 text-sm border animate-slide-down ${
           message.type === 'success'
-            ? 'bg-green-50 border-green-200 text-green-700'
+            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
             : 'bg-red-50 border-red-200 text-red-600'
         }`}>
           {message.text}
@@ -102,8 +102,8 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Heart className="w-4 h-4 text-rose-400" />
+          <CardTitle className="flex items-center gap-2.5 text-base">
+            <Heart className="w-4 h-4 text-neutral-400" />
             Your Profile
           </CardTitle>
         </CardHeader>
@@ -123,19 +123,19 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Link2 className="w-4 h-4 text-rose-400" />
+          <CardTitle className="flex items-center gap-2.5 text-base">
+            <Link2 className="w-4 h-4 text-neutral-400" />
             Connect with Partner
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {profile?.partner_id ? (
-            <div className="rounded-xl bg-green-50 border border-green-200 p-5 text-center">
-              <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                <Heart className="w-6 h-6 text-green-500" />
+            <div className="rounded-xl bg-emerald-50 border border-emerald-200 p-6 text-center">
+              <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-3">
+                <Heart className="w-7 h-7 text-emerald-500" fill="currentColor" />
               </div>
-              <p className="text-green-700 font-semibold">Connected!</p>
-              <p className="text-sm text-green-600 mt-1">You can see each other&apos;s status and memories.</p>
+              <p className="text-emerald-700 font-semibold text-lg">Connected!</p>
+              <p className="text-sm text-emerald-600 mt-1">You can see each other&apos;s status and memories.</p>
             </div>
           ) : (
             <>
@@ -143,11 +143,11 @@ export default function SettingsPage() {
                 <Label>Your Pairing Code</Label>
                 {profile?.pairing_code ? (
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 px-4 py-3 rounded-xl bg-secondary text-center text-xl font-mono font-bold tracking-[0.25em] text-gray-800 border border-border/50">
+                    <div className="flex-1 px-4 py-3 rounded-xl bg-neutral-50 text-center text-xl font-mono font-bold tracking-[0.25em] text-neutral-800 border border-neutral-200">
                       {profile.pairing_code}
                     </div>
                     <Button variant="ghost" size="icon" onClick={copyCode} className="shrink-0">
-                      {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4 text-neutral-400" />}
                     </Button>
                   </div>
                 ) : (
@@ -155,12 +155,12 @@ export default function SettingsPage() {
                     Generate Code
                   </Button>
                 )}
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-neutral-400">
                   Share this code with your partner. They enter it below to connect.
                 </p>
               </div>
 
-              <div className="border-t border-border/30 pt-4 space-y-3">
+              <div className="border-t border-gray-100 pt-4 space-y-3">
                 <Label>Enter Partner&apos;s Code</Label>
                 <div className="flex gap-2">
                   <Input

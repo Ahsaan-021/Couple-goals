@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Heart, Loader2, CheckCircle } from 'lucide-react'
+import { Heart, Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -47,17 +47,20 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-white">
         <div className="w-full max-w-sm text-center animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-4">
-            <CheckCircle className="w-8 h-8 text-green-500" />
+          <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-emerald-500" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Check your email</h1>
-          <p className="text-sm text-gray-500 mt-2">
-            We sent a confirmation link to <strong className="text-gray-700">{email}</strong>
+          <h1 className="text-2xl font-bold text-neutral-900">Check your email</h1>
+          <p className="text-sm text-neutral-500 mt-2">
+            We sent a confirmation link to <strong className="text-neutral-700">{email}</strong>
           </p>
           <Link href="/auth/login">
-            <Button variant="outline" className="mt-6">Back to Sign In</Button>
+            <Button variant="outline" className="mt-6">
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
+              Back to Sign In
+            </Button>
           </Link>
         </div>
       </div>
@@ -65,18 +68,18 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-[#fdf2f0] via-white to-[#fef6f5]">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-white">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <Heart className="w-7 h-7 text-rose-500" />
+          <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-7 h-7 text-neutral-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">Create your space</h1>
-          <p className="text-sm text-gray-500 mt-1">A private world for two</p>
+          <h1 className="text-2xl font-bold text-neutral-900">Create your space</h1>
+          <p className="text-sm text-neutral-500 mt-1">A private world for two</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-border/50 p-6">
-          <form onSubmit={handleRegister} className="space-y-4">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-6">
+          <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name">Your Name</Label>
               <Input
@@ -114,7 +117,7 @@ export default function RegisterPage() {
                 minLength={6}
                 className="h-11"
               />
-              <p className="text-xs text-gray-400">At least 6 characters</p>
+              <p className="text-xs text-neutral-400">At least 6 characters</p>
             </div>
 
             {error && (
@@ -130,7 +133,7 @@ export default function RegisterPage() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="text-center text-sm text-neutral-500 mt-6">
           Already have a space?{' '}
           <Link href="/auth/login" className="text-rose-500 hover:text-rose-600 font-medium">
             Sign in

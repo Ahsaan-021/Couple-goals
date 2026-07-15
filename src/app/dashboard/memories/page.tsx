@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Memory } from '@/types'
 import { formatDate } from '@/lib/utils'
 import MemoryForm from '@/components/MemoryForm'
-import { Heart, BookHeart, LayoutGrid, List, ImageIcon, Play, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { BookHeart, LayoutGrid, List, ImageIcon, Play, X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function MemoriesPage() {
   const { user } = useAuth()
@@ -56,24 +56,24 @@ export default function MemoriesPage() {
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
             <BookHeart className="w-5 h-5 text-rose-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Memories</h1>
-            <p className="text-sm text-gray-400">Moments that matter, just for you two</p>
+            <h1 className="text-xl font-bold text-neutral-900">Memories</h1>
+            <p className="text-sm text-neutral-400">Moments that matter, just for you two</p>
           </div>
         </div>
-        <div className="flex bg-white rounded-xl border border-border/50 p-0.5 shadow-sm">
+        <div className="flex bg-white rounded-xl border border-gray-200 p-0.5">
           <button
             onClick={() => setView('timeline')}
-            className={`p-2 rounded-lg transition-all ${view === 'timeline' ? 'bg-rose-50 text-rose-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`p-2 rounded-lg transition-all ${view === 'timeline' ? 'bg-rose-50 text-rose-500' : 'text-neutral-400 hover:text-neutral-600'}`}
           >
             <List className="w-4 h-4" />
           </button>
           <button
             onClick={() => setView('gallery')}
-            className={`p-2 rounded-lg transition-all ${view === 'gallery' ? 'bg-rose-50 text-rose-500 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`p-2 rounded-lg transition-all ${view === 'gallery' ? 'bg-rose-50 text-rose-500' : 'text-neutral-400 hover:text-neutral-600'}`}
           >
             <LayoutGrid className="w-4 h-4" />
           </button>
@@ -85,60 +85,59 @@ export default function MemoriesPage() {
       {loading ? (
         <div className="space-y-4 animate-pulse-soft">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="rounded-2xl border border-border/50 bg-white p-5">
-              <div className="h-4 bg-gray-100 rounded w-3/4 mb-3" />
-              <div className="h-4 bg-gray-100 rounded w-1/2" />
+            <div key={i} className="rounded-2xl border border-gray-100 bg-white p-5">
+              <div className="h-4 bg-neutral-100 rounded w-3/4 mb-3" />
+              <div className="h-4 bg-neutral-100 rounded w-1/2" />
             </div>
           ))}
         </div>
       ) : memories.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-border/50 shadow-sm">
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-card">
           <div className="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-4">
             <ImageIcon className="w-8 h-8 text-rose-300" />
           </div>
-          <p className="text-gray-500 font-medium">No memories yet</p>
-          <p className="text-sm text-gray-400 mt-1">Start capturing your favourite moments together</p>
+          <p className="text-neutral-500 font-medium">No memories yet</p>
+          <p className="text-sm text-neutral-400 mt-1">Start capturing your favourite moments together</p>
         </div>
       ) : view === 'gallery' && galleryItems.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-border/50 shadow-sm">
+        <div className="text-center py-16 bg-white rounded-2xl border border-gray-100 shadow-card">
           <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
             <ImageIcon className="w-8 h-8 text-amber-300" />
           </div>
-          <p className="text-gray-500 font-medium">No photos or videos yet</p>
-          <p className="text-sm text-gray-400 mt-1">Switch to timeline to add media</p>
+          <p className="text-neutral-500 font-medium">No photos or videos yet</p>
+          <p className="text-sm text-neutral-400 mt-1">Switch to timeline to add media</p>
         </div>
       ) : view === 'timeline' ? (
         <div className="space-y-3">
           {memories.map((memory, idx) => (
             <div
               key={memory.id}
-              className="rounded-2xl border border-border/50 bg-white p-5 shadow-sm hover:shadow-md transition-all duration-300"
+              className="rounded-2xl border border-gray-100 bg-white p-5 shadow-card hover:shadow-card-hover transition-all duration-300"
               style={{ animationDelay: `${idx * 50}ms` }}
             >
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-rose-300 mt-2 shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{memory.content}</p>
+                  <p className="text-neutral-700 leading-relaxed whitespace-pre-wrap">{memory.content}</p>
                   {memory.image_url && memory.media_type === 'image' && (
                     <img
                       src={memory.image_url}
                       alt="Memory"
-                      className="rounded-xl max-h-64 w-full object-cover border border-border/30 cursor-pointer hover:opacity-95 transition-opacity"
+                      className="rounded-xl max-h-64 w-full object-cover border border-gray-100 cursor-pointer hover:opacity-95 transition-opacity"
                       onClick={() => setLightbox({ idx: mediaMemories.findIndex((m) => m.id === memory.id), memories: mediaMemories })}
                     />
                   )}
                   {memory.image_url && memory.media_type === 'video' && (
                     <div className="relative group cursor-pointer" onClick={() => setLightbox({ idx: mediaMemories.findIndex((m) => m.id === memory.id), memories: mediaMemories })}>
-                      <video src={memory.image_url} className="rounded-xl max-h-64 w-full object-cover border border-border/30" />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors rounded-xl">
+                      <video src={memory.image_url} className="rounded-xl max-h-64 w-full object-cover border border-gray-100" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors rounded-xl">
                         <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                          <Play className="w-5 h-5 text-gray-800 ml-0.5" />
+                          <Play className="w-5 h-5 text-neutral-800 ml-0.5" />
                         </div>
                       </div>
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 flex items-center gap-1">
-                    <Heart className="w-3 h-3" />
+                  <p className="text-xs text-neutral-400 flex items-center gap-1">
                     {formatDate(memory.created_at)}
                   </p>
                 </div>
@@ -151,7 +150,7 @@ export default function MemoriesPage() {
           {galleryItems.map((memory, idx) => (
             <div
               key={memory.id}
-              className="relative aspect-square rounded-xl overflow-hidden border border-border/30 bg-white shadow-sm group cursor-pointer hover:shadow-md transition-all"
+              className="relative aspect-square rounded-xl overflow-hidden border border-gray-100 bg-white shadow-card group cursor-pointer hover:shadow-card-hover transition-all"
               onClick={() => setLightbox({ idx, memories: galleryItems })}
             >
               {memory.media_type === 'video' ? (
@@ -159,7 +158,7 @@ export default function MemoriesPage() {
                   <video src={memory.image_url!} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors">
                     <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                      <Play className="w-4 h-4 text-gray-800 ml-0.5" />
+                      <Play className="w-4 h-4 text-neutral-800 ml-0.5" />
                     </div>
                   </div>
                 </>

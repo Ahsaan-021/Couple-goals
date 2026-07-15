@@ -95,7 +95,6 @@ export default function ChatPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  /* Mark one-time messages as viewed when lightbox closes */
   const closeLightbox = useCallback(async () => {
     if (lightboxMsg && lightboxMsg.is_one_time && !lightboxMsg.viewed_at) {
       const msgId = lightboxMsg.id
@@ -175,8 +174,8 @@ export default function ChatPage() {
         <div className="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-4">
           <MessageCircle className="w-8 h-8 text-rose-300" />
         </div>
-        <p className="text-gray-500 font-medium">No partner connected</p>
-        <p className="text-sm text-gray-400 mt-1">Link with your partner in Settings to start chatting</p>
+        <p className="text-neutral-500 font-medium">No partner connected</p>
+        <p className="text-sm text-neutral-400 mt-1">Link with your partner in Settings to start chatting</p>
       </div>
     )
   }
@@ -187,21 +186,21 @@ export default function ChatPage() {
     <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-10rem)]">
       <div className="flex items-center justify-between gap-3 mb-4 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
             <MessageCircle className="w-5 h-5 text-rose-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-800">Chat</h1>
-            <p className="text-sm text-gray-400">with {partnerName}</p>
+            <h1 className="text-xl font-bold text-neutral-900">Chat</h1>
+            <p className="text-sm text-neutral-400">with {partnerName}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={clearChat} disabled={clearing || messages.length === 0} className="text-gray-400 hover:text-red-500">
+        <Button variant="ghost" size="sm" onClick={clearChat} disabled={clearing || messages.length === 0} className="text-neutral-400 hover:text-red-500">
           {clearing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
           <span className="ml-1.5 hidden sm:inline">Clear Chat</span>
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
         {loading ? (
           <div className="space-y-3 animate-pulse-soft">
             {[1, 2, 3, 4].map((i) => (
@@ -212,11 +211,11 @@ export default function ChatPage() {
           </div>
         ) : messages.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-3">
-              <Heart className="w-7 h-7 text-gray-300" />
+            <div className="w-14 h-14 rounded-2xl bg-neutral-50 flex items-center justify-center mx-auto mb-3">
+              <Heart className="w-7 h-7 text-neutral-300" />
             </div>
-            <p className="text-gray-500 font-medium">No messages yet</p>
-            <p className="text-sm text-gray-400 mt-1">Say something to {partnerName}</p>
+            <p className="text-neutral-500 font-medium">No messages yet</p>
+            <p className="text-sm text-neutral-400 mt-1">Say something to {partnerName}</p>
           </div>
         ) : (
           messages.map((m) => {
@@ -230,21 +229,21 @@ export default function ChatPage() {
                 <div
                   className={`max-w-[75%] px-4 py-2.5 rounded-2xl ${
                     isOwn
-                      ? 'bg-gradient-to-r from-rose-400 to-rose-500 text-white rounded-br-md'
-                      : 'bg-white border border-border/50 text-gray-700 rounded-bl-md shadow-sm'
+                      ? 'bg-rose-500 text-white rounded-br-md'
+                      : 'bg-white border border-gray-100 text-neutral-700 rounded-bl-md shadow-card'
                   }`}
                 >
                   {isUnviewedOneTime ? (
                     <button
                       onClick={() => setLightboxMsg(m)}
-                      className="flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl bg-gray-100/80 hover:bg-gray-200/80 transition-colors w-full text-center"
+                      className="flex flex-col items-center gap-1.5 py-3 px-4 rounded-xl bg-neutral-100 hover:bg-neutral-200 transition-colors w-full text-center"
                     >
                       {hasMedia ? (
-                        m.media_type === 'video' ? <Play className="w-6 h-6 text-gray-400" /> : <ImagePlus className="w-6 h-6 text-gray-400" />
+                        m.media_type === 'video' ? <Play className="w-6 h-6 text-neutral-400" /> : <ImagePlus className="w-6 h-6 text-neutral-400" />
                       ) : (
-                        <EyeOff className="w-6 h-6 text-gray-400" />
+                        <EyeOff className="w-6 h-6 text-neutral-400" />
                       )}
-                      <span className="text-xs text-gray-500 font-medium">Tap to view once</span>
+                      <span className="text-xs text-neutral-500 font-medium">Tap to view once</span>
                     </button>
                   ) : (
                     <>
@@ -258,10 +257,10 @@ export default function ChatPage() {
                         >
                           {m.media_type === 'video' ? (
                             <>
-                              <video src={m.media_url!} className="rounded-xl max-h-60 w-full object-cover border border-border/20" />
+                              <video src={m.media_url!} className="rounded-xl max-h-60 w-full object-cover border border-white/20" />
                               <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors rounded-xl">
                                 <div className="w-10 h-10 bg-white/90 rounded-full flex items-center justify-center shadow-lg">
-                                  <Play className="w-4 h-4 text-gray-800 ml-0.5" />
+                                  <Play className="w-4 h-4 text-neutral-800 ml-0.5" />
                                 </div>
                               </div>
                             </>
@@ -269,7 +268,7 @@ export default function ChatPage() {
                             <img
                               src={m.media_url!}
                               alt="Shared"
-                              className="rounded-xl max-h-60 w-full object-cover border border-border/20 group-hover:opacity-95 transition-opacity"
+                              className="rounded-xl max-h-60 w-full object-cover border border-white/20 group-hover:opacity-95 transition-opacity"
                             />
                           )}
                           <div className="absolute top-2 right-2 w-6 h-6 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -281,7 +280,7 @@ export default function ChatPage() {
                   )}
 
                   <div className={`flex items-center gap-1.5 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                    <p className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-gray-400'}`}>
+                    <p className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-neutral-400'}`}>
                       {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                     {m.is_one_time && (
@@ -304,9 +303,9 @@ export default function ChatPage() {
         {filePreview && (
           <div className="relative inline-block ml-1">
             {fileMediaType === 'video' ? (
-              <video src={filePreview} className="h-16 rounded-lg border border-border/30" />
+              <video src={filePreview} className="h-16 rounded-lg border border-gray-200" />
             ) : (
-              <img src={filePreview} alt="Preview" className="h-16 rounded-lg border border-border/30 object-cover" />
+              <img src={filePreview} alt="Preview" className="h-16 rounded-lg border border-gray-200 object-cover" />
             )}
             <button
               type="button"
@@ -319,11 +318,11 @@ export default function ChatPage() {
         )}
 
         <div className="flex gap-2 items-end">
-          <div className="flex-1 flex items-center gap-1.5 bg-white rounded-xl border border-border/50 px-3 py-1.5">
+          <div className="flex-1 flex items-center gap-1.5 bg-white rounded-xl border border-gray-200 px-3 py-1.5">
             <button
               type="button"
               onClick={() => { if (fileRef.current) { fileRef.current.accept = 'image/*'; fileRef.current.click() } }}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-rose-500 transition-colors shrink-0"
+              className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
               title="Send photo"
             >
               <ImagePlus className="w-4 h-4" />
@@ -331,7 +330,7 @@ export default function ChatPage() {
             <button
               type="button"
               onClick={() => { if (fileRef.current) { fileRef.current.accept = 'video/*'; fileRef.current.click() } }}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-rose-500 transition-colors shrink-0"
+              className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
               title="Send video"
             >
               <Video className="w-4 h-4" />
@@ -344,14 +343,14 @@ export default function ChatPage() {
               onChange={(e) => setInput(e.target.value)}
               placeholder={`Message ${partnerName}...`}
               maxLength={2000}
-              className="flex-1 bg-transparent py-2 text-sm placeholder:text-gray-400 focus:outline-none"
+              className="flex-1 bg-transparent py-2 text-sm placeholder:text-neutral-400 focus:outline-none"
             />
 
             <button
               type="button"
               onClick={() => setIsOneTime(!isOneTime)}
               className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                isOneTime ? 'bg-amber-100 text-amber-500' : 'hover:bg-gray-100 text-gray-400 hover:text-gray-600'
+                isOneTime ? 'bg-amber-100 text-amber-500' : 'hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600'
               }`}
               title={isOneTime ? 'One-time view ON' : 'One-time view OFF'}
             >

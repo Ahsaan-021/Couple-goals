@@ -2,8 +2,6 @@
 
 import { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/contexts/AuthContext'
 import { Input } from '@/components/ui/input'
 import { Pencil } from 'lucide-react'
 
@@ -72,7 +70,7 @@ export default function StatusSelector({
     <div className="space-y-5">
       <div>
         <div className="flex items-center justify-between mb-3">
-          <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">What are you up to?</p>
+          <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">What are you up to?</p>
           {currentReason && currentReason !== 'available' && (
             <button
               onClick={() => setShowNoteInput(!showNoteInput)}
@@ -95,8 +93,8 @@ export default function StatusSelector({
                 className={cn(
                   'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-all duration-200 border',
                   isActive
-                    ? 'bg-rose-50 border-rose-200 text-rose-700 shadow-sm ring-1 ring-rose-200'
-                    : 'bg-white border-border/60 text-gray-500 hover:border-rose-200 hover:bg-rose-50/50 hover:text-gray-700',
+                    ? 'bg-rose-50 border-rose-200 text-rose-700 ring-1 ring-rose-200'
+                    : 'bg-white border-neutral-200 text-neutral-500 hover:border-rose-200 hover:bg-rose-50/50 hover:text-neutral-700',
                   isLoading && 'opacity-50'
                 )}
               >
@@ -128,7 +126,7 @@ export default function StatusSelector({
       </div>
 
       <div>
-        <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">How are you feeling?</p>
+        <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider mb-3">How are you feeling?</p>
         <div className="flex flex-wrap gap-2">
           {emotions.map((e) => {
             const isActive = isEmotionActive(e.value)
@@ -141,8 +139,8 @@ export default function StatusSelector({
                 className={cn(
                   'inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium transition-all duration-200 border',
                   isActive
-                    ? 'bg-purple-50 border-purple-200 text-purple-700 shadow-sm ring-1 ring-purple-200'
-                    : 'bg-white border-border/60 text-gray-500 hover:border-purple-200 hover:bg-purple-50/50 hover:text-gray-700',
+                    ? 'bg-rose-50 border-rose-200 text-rose-700 ring-1 ring-rose-200'
+                    : 'bg-white border-neutral-200 text-neutral-500 hover:border-rose-200 hover:bg-rose-50/50 hover:text-neutral-700',
                   isLoading && 'opacity-50'
                 )}
               >

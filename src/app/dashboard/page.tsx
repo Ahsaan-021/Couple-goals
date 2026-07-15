@@ -10,16 +10,16 @@ import StatusSelector from '@/components/StatusSelector'
 import ScheduleManager from '@/components/ScheduleManager'
 import PartnerCard from '@/components/PartnerCard'
 import Link from 'next/link'
-import { Heart, MessageCircle, Sparkles, Clock } from 'lucide-react'
+import { Heart, MessageCircle, Sparkles, Clock, ChevronRight } from 'lucide-react'
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse-soft">
-      <div className="h-8 w-48 bg-gray-200 rounded-lg" />
-      <div className="h-4 w-32 bg-gray-100 rounded-lg" />
-      <div className="h-32 bg-white/50 rounded-2xl" />
-      <div className="h-48 bg-white/50 rounded-2xl" />
-      <div className="h-64 bg-white/50 rounded-2xl" />
+    <div className="space-y-5 animate-pulse-soft">
+      <div className="h-8 w-48 bg-neutral-100 rounded-lg" />
+      <div className="h-4 w-32 bg-neutral-100 rounded-lg" />
+      <div className="h-32 bg-white rounded-2xl border border-gray-50" />
+      <div className="h-48 bg-white rounded-2xl border border-gray-50" />
+      <div className="h-64 bg-white rounded-2xl border border-gray-50" />
     </div>
   )
 }
@@ -77,7 +77,6 @@ export default function DashboardPage() {
     })()
   }, [user])
 
-  /* ── Real-time subscriptions ── */
   useEffect(() => {
     if (!user) return
 
@@ -122,48 +121,50 @@ export default function DashboardPage() {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
 
   return (
-    <div className="space-y-5 max-w-3xl mx-auto">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="space-y-6 max-w-3xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 flex items-center gap-2.5">
             Hello, {profile?.name?.split(' ')[0] || 'there'}
             <Sparkles className="w-5 h-5 text-amber-400" />
           </h1>
-          <p className="text-sm text-gray-400 mt-0.5">{today}</p>
+          <p className="text-sm text-neutral-400 mt-1">{today}</p>
         </div>
         {partnerPhone && (
           <Button variant="outline" size="sm" onClick={openWhatsApp} className="shrink-0">
-            <MessageCircle className="w-4 h-4 mr-1.5 text-green-500" />
+            <MessageCircle className="w-4 h-4 mr-1.5 text-emerald-500" />
             Send to Partner
           </Button>
         )}
       </div>
 
       {!profile?.partner_id && (
-        <div className="rounded-2xl bg-gradient-to-r from-amber-50 to-rose-50 border border-amber-200/50 p-4 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+        <div className="rounded-2xl bg-amber-50 border border-amber-200/50 p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
             <Heart className="w-4 h-4 text-amber-500" />
           </div>
-          <p className="text-sm text-amber-700">
-            Connect with your partner in{' '}
-            <Link href="/dashboard/settings" className="font-semibold underline underline-offset-2 hover:text-amber-800">
-              Settings
-            </Link>{' '}
-            to share status and memories.
+          <p className="text-sm text-amber-700 flex-1">
+            Connect with your partner to share status and memories.
           </p>
+          <Link href="/dashboard/settings">
+            <Button variant="outline" size="sm" className="shrink-0 text-amber-700 border-amber-200 hover:bg-amber-100">
+              Settings
+              <ChevronRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </Link>
         </div>
       )}
 
       {partner && (
-        <div className="animate-slide-up">
+        <div className="animate-scale-in">
           <PartnerCard partner={partner} />
         </div>
       )}
 
-      <Card className="overflow-hidden">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center">
+          <CardTitle className="flex items-center gap-2.5 text-base">
+            <span className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center">
               <Heart className="w-3.5 h-3.5 text-rose-500" />
             </span>
             How are you feeling?
@@ -179,10 +180,10 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden">
+      <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-rose-100 to-purple-100 flex items-center justify-center">
+          <CardTitle className="flex items-center gap-2.5 text-base">
+            <span className="w-7 h-7 rounded-lg bg-rose-50 flex items-center justify-center">
               <Clock className="w-3.5 h-3.5 text-rose-500" />
             </span>
             Weekly Schedule

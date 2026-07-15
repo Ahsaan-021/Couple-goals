@@ -4,11 +4,9 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Schedule } from '@/types'
-import { Button } from '@/components/ui/button'
-import { Plus, X, Clock, Save } from 'lucide-react'
+import { Plus, X, Clock } from 'lucide-react'
 
 const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const dayFull = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 interface ScheduleManagerProps {
   schedules: Schedule[]
@@ -62,9 +60,9 @@ export default function ScheduleManager({ schedules, onSchedulesChange }: Schedu
         const slots = grouped[i] || []
         const isToday = i === today
         return (
-          <div key={i} className={`py-3 px-1 border-b border-border/20 last:border-0 ${isToday ? 'bg-rose-50/30 -mx-1 px-3 rounded-lg' : ''}`}>
+          <div key={i} className={`py-3 px-1 border-b border-gray-100 last:border-0 ${isToday ? 'bg-rose-50/30 -mx-1 px-3 rounded-lg' : ''}`}>
             <div className="flex items-center gap-2 mb-2">
-              <div className={`w-10 text-xs font-semibold ${isToday ? 'text-rose-600' : 'text-gray-500'}`}>
+              <div className={`w-10 text-xs font-semibold ${isToday ? 'text-rose-600' : 'text-neutral-500'}`}>
                 {day}
                 {isToday && <span className="block text-[10px] font-normal text-rose-400">today</span>}
               </div>
@@ -72,7 +70,7 @@ export default function ScheduleManager({ schedules, onSchedulesChange }: Schedu
               <button
                 onClick={() => addSlot(i)}
                 disabled={saving === `add-${day}`}
-                className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-rose-500 transition-colors"
+                className="inline-flex items-center gap-1 text-xs text-neutral-400 hover:text-rose-500 transition-colors"
               >
                 <Plus className="w-3 h-3" />
                 Add block
@@ -80,7 +78,7 @@ export default function ScheduleManager({ schedules, onSchedulesChange }: Schedu
             </div>
 
             {slots.length === 0 && (
-              <div className="ml-12 text-sm text-gray-300 italic">Free all day</div>
+              <div className="ml-12 text-sm text-neutral-300 italic">Free all day</div>
             )}
 
             <div className="ml-12 space-y-2">
@@ -91,26 +89,26 @@ export default function ScheduleManager({ schedules, onSchedulesChange }: Schedu
                     type="time"
                     value={slot.start_time?.slice(0, 5) || '09:00'}
                     onChange={(e) => updateSlot(slot.id, 'start_time', e.target.value)}
-                    className="text-sm border border-border/40 rounded-lg px-2 py-1.5 bg-white w-24 text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-transparent"
+                    className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white w-24 text-neutral-700 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-transparent"
                   />
-                  <span className="text-xs text-gray-400">to</span>
+                  <span className="text-xs text-neutral-400">to</span>
                   <input
                     type="time"
                     value={slot.end_time?.slice(0, 5) || '17:00'}
                     onChange={(e) => updateSlot(slot.id, 'end_time', e.target.value)}
-                    className="text-sm border border-border/40 rounded-lg px-2 py-1.5 bg-white w-24 text-gray-700 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-transparent"
+                    className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white w-24 text-neutral-700 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-transparent"
                   />
                   <input
                     type="text"
                     value={slot.label || ''}
                     onChange={(e) => updateSlot(slot.id, 'label', e.target.value)}
                     placeholder="What?"
-                    className="text-sm border border-border/40 rounded-lg px-2 py-1.5 bg-white flex-1 min-w-0 text-gray-600 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-transparent"
+                    className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white flex-1 min-w-0 text-neutral-600 placeholder:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-transparent"
                     maxLength={30}
                   />
                   <button
                     onClick={() => removeSlot(slot.id)}
-                    className="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    className="text-neutral-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -120,7 +118,7 @@ export default function ScheduleManager({ schedules, onSchedulesChange }: Schedu
           </div>
         )
       })}
-      <p className="text-xs text-gray-400 pt-3 text-center">
+      <p className="text-xs text-neutral-400 pt-3 text-center">
         <Clock className="w-3 h-3 inline mr-1" />
         Add time blocks for when you&apos;re busy. Empty days = free all day.
       </p>
