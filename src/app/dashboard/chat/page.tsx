@@ -108,7 +108,16 @@ export default function ChatPage() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const m = payload.new as Message
         if (m.sender_id === user.id || m.receiver_id === user.id) {
-          setMessages((prev) => prev.some(x => x.id === m.id) ? prev : [...prev, m])
+          setMessages((prev) => {
+            if (prev.some(x => x.id === m.id)) return prev
+            const tempIdx = prev.findIndex(x => (x.id.startsWith('voice_') || x.id.startsWith('temp_')) && x.sender_id === m.sender_id && x.content === m.content && x.media_url === '' && x.media_type === m.media_type)
+            if (tempIdx >= 0) {
+              const copy = [...prev]
+              copy[tempIdx] = { ...copy[tempIdx], id: m.id }
+              return copy
+            }
+            return [...prev, m]
+          })
           if (m.receiver_id === user.id && !m.viewed_at && !m.is_one_time) {
             supabase.from('messages').update({ viewed_at: new Date().toISOString() }).eq('id', m.id)
             setMessages((prev) => prev.map((x) => x.id === m.id ? { ...x, viewed_at: x.viewed_at || new Date().toISOString() } : x))
@@ -192,44 +201,42 @@ export default function ChatPage() {
 
   const sendAudioMessage = async (audioBlob: Blob) => {
     if (!user || !profile?.partner_id) return
-    setSending(true)
+    const tempId = `voice_${Date.now()}`
+    const optimisticMsg: Message = {
+      id: tempId,
+      sender_id: user.id,
+      receiver_id: profile.partner_id,
+      content: '',
+      media_url: '',
+      media_type: 'audio',
+      is_one_time: null,
+      viewed_at: null,
+      deleted_at: null,
+      created_at: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, optimisticMsg])
     try {
       const formData = new FormData()
-      const ext = 'webm'
-      formData.append('file', audioBlob, `voice_${Date.now()}.${ext}`)
+      formData.append('file', audioBlob, `voice_${Date.now()}.webm`)
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       const data = await res.json()
       if (data.url) {
-        const tempId = `temp_${Date.now()}`
-        const optimisticMsg = {
-          id: tempId,
-          sender_id: user.id,
-          receiver_id: profile.partner_id,
-          content: '',
-          media_url: data.url,
-          media_type: 'audio' as const,
-          is_one_time: null,
-          viewed_at: null,
-          deleted_at: null,
-          created_at: new Date().toISOString(),
-        }
-        setMessages((prev) => [...prev, optimisticMsg])
-        const { data: inserted } = await supabase.from('messages').insert({
+        setMessages((prev) => prev.map((x) => x.id === tempId ? { ...x, media_url: data.url } : x))
+        await supabase.from('messages').insert({
           sender_id: user.id,
           receiver_id: profile.partner_id,
           content: '',
           media_url: data.url,
           media_type: 'audio',
-        }).select('id, created_at').single()
-        if (inserted) {
-          setMessages((prev) => prev.map((x) => x.id === tempId ? { ...optimisticMsg, id: inserted.id, created_at: inserted.created_at } : x))
-        }
+        })
         notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
+      } else {
+        setMessages((prev) => prev.filter((x) => x.id !== tempId))
       }
     } catch (e) {
       console.error('Send audio failed:', e)
+      setMessages((prev) => prev.filter((x) => x.id !== tempId))
     }
-    setSending(false)
   }
 
   const startRecording = async () => {

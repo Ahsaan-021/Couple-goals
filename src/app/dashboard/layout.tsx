@@ -11,6 +11,7 @@ import { Heart, ImageIcon, BarChart3, Settings, LogOut, Menu, X, Home, MessageCi
 import { FaInstagram, FaWhatsapp } from 'react-icons/fa'
 import ThemeToggle from '@/components/ThemeToggle'
 import NotificationBell from '@/components/NotificationBell'
+import PermissionPrompt from '@/components/PermissionPrompt'
 
 const navItems = [
   { href: '/dashboard', label: 'Home', icon: Home },
@@ -135,6 +136,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+      <PermissionPrompt />
     </div>
   )
 }
