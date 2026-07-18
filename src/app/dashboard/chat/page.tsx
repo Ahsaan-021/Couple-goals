@@ -5,9 +5,15 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Message, Profile } from '@/types'
 import { Button } from '@/components/ui/button'
-import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera, Smile } from 'lucide-react'
+import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera, Smile, Mic, Square, Check } from 'lucide-react'
 import { notifyMessage } from '@/lib/notifications'
 import CameraCapture from '@/components/AdvancedCamera'
+
+function formatTime(seconds: number) {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
 
 function Lightbox({ message, onClose }: { message: Message; onClose: () => void }) {
   const isVideo = message.media_type === 'video'
@@ -54,9 +60,17 @@ export default function ChatPage() {
   const [pendingViewIds, setPendingViewIds] = useState<Set<string>>(new Set())
   const [showEmoji, setShowEmoji] = useState(false)
   const [showCamera, setShowCamera] = useState(false)
+  const [partnerTyping, setPartnerTyping] = useState(false)
+  const [recording, setRecording] = useState(false)
+  const [recordingTime, setRecordingTime] = useState(0)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const prevLen = useRef(0)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const typingChannelRef = useRef<any>(null)
 
   useEffect(() => {
     if (!user || !profile) return
@@ -72,6 +86,14 @@ export default function ChatPage() {
         .order('created_at', { ascending: true })
 
       if (msgs) setMessages(msgs)
+
+      const unviewedIds = (msgs || [])
+        .filter(m => m.receiver_id === user.id && !m.viewed_at && !m.is_one_time)
+        .map(m => m.id)
+      if (unviewedIds.length > 0) {
+        await supabase.from('messages').update({ viewed_at: new Date().toISOString() }).in('id', unviewedIds)
+      }
+
       setLoading(false)
     })()
   }, [user, profile])
@@ -84,6 +106,10 @@ export default function ChatPage() {
         const m = payload.new as Message
         if (m.sender_id === user.id || m.receiver_id === user.id) {
           setMessages((prev) => [...prev, m])
+          if (m.receiver_id === user.id && !m.viewed_at && !m.is_one_time) {
+            supabase.from('messages').update({ viewed_at: new Date().toISOString() }).eq('id', m.id)
+            m.viewed_at = new Date().toISOString()
+          }
         }
       })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, (payload) => {
@@ -95,6 +121,22 @@ export default function ChatPage() {
       .subscribe()
     return () => { supabase.removeChannel(channel) }
   }, [user])
+
+  useEffect(() => {
+    if (!user || !profile?.partner_id) return
+    const typingId = `typing-${[user.id, profile.partner_id].sort().join('-')}`
+    const typingChannel = supabase.channel(typingId, {
+      config: { broadcast: { self: false } },
+    })
+    typingChannel.on('broadcast', { event: 'typing' }, () => {
+      setPartnerTyping(true)
+      clearTimeout((typingChannel as any)._typingTimer)
+      const timer = setTimeout(() => setPartnerTyping(false), 3000)
+      ;(typingChannel as any)._typingTimer = timer
+    }).subscribe()
+    typingChannelRef.current = typingChannel
+    return () => { supabase.removeChannel(typingChannel) }
+  }, [user, profile?.partner_id])
 
   useEffect(() => {
     if (messages.length > prevLen.current) {
@@ -137,6 +179,54 @@ export default function ChatPage() {
     setFileMediaType(null)
   }
 
+  const sendAudioMessage = async (audioBlob: Blob) => {
+    if (!user || !profile?.partner_id) return
+    setSending(true)
+    const formData = new FormData()
+    formData.append('file', audioBlob, `voice_${Date.now()}.webm`)
+    const res = await fetch('/api/upload', { method: 'POST', body: formData })
+    const data = await res.json()
+    if (data.url) {
+      await supabase.from('messages').insert({
+        sender_id: user.id,
+        receiver_id: profile.partner_id,
+        content: '',
+        media_url: data.url,
+        media_type: 'audio',
+      })
+      notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
+    }
+    setSending(false)
+  }
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      mediaRecorderRef.current = recorder
+      audioChunksRef.current = []
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        if (blob.size > 0) sendAudioMessage(blob)
+      }
+      recorder.start()
+      setRecording(true)
+      setRecordingTime(0)
+      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000)
+    } catch { /* permission denied */ }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+    setRecording(false)
+    clearInterval(recordingTimerRef.current)
+    recordingTimerRef.current = undefined
+  }
+
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user || !profile?.partner_id || (!input.trim() && !file)) return
@@ -147,18 +237,11 @@ export default function ChatPage() {
 
     if (file) {
       mediaType = file.type.startsWith('video/') ? 'video' : 'image'
-      const ext = file.name.split('.').pop()
-      const filePath = `chat/${user.id}/${Date.now()}.${ext}`
-      const { data: uploadData } = await supabase.storage
-        .from('memories')
-        .upload(filePath, file)
-
-      if (uploadData) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('memories')
-          .getPublicUrl(filePath)
-        mediaUrl = publicUrl
-      }
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.url) mediaUrl = data.url
     }
 
     await supabase.from('messages').insert({
@@ -194,6 +277,15 @@ export default function ChatPage() {
     setClearing(false)
   }
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value)
+    if (typingChannelRef.current) {
+      typingChannelRef.current.send({ type: 'broadcast', event: 'typing', payload: {} })
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = setTimeout(() => {}, 2000)
+    }
+  }
+
   if (!profile?.partner_id) {
     return (
       <div className="max-w-2xl mx-auto text-center py-20">
@@ -217,7 +309,9 @@ export default function ChatPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Chat</h1>
-            <p className="text-sm text-neutral-400 dark:text-neutral-500">with {partnerName}</p>
+            <p className="text-sm text-neutral-400 dark:text-neutral-500">
+              {partnerTyping ? <span className="text-rose-500 animate-pulse">typing...</span> : `with ${partnerName}`}
+            </p>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={clearChat} disabled={clearing || messages.length === 0} className="text-neutral-400 hover:text-red-500">
@@ -248,6 +342,7 @@ export default function ChatPage() {
             const isOwn = m.sender_id === user!.id
             const isViewed = !!m.viewed_at
             const hasMedia = m.media_url && (m.media_type === 'image' || m.media_type === 'video')
+            const isAudio = m.media_type === 'audio'
             const isUnviewedOneTime = !isOwn && m.is_one_time && !isViewed
 
             return (
@@ -271,6 +366,20 @@ export default function ChatPage() {
                       )}
                       <span className="text-xs text-neutral-500 dark:text-neutral-400 font-medium">Tap to view once</span>
                     </button>
+                  ) : isAudio ? (
+                    <>
+                      <audio src={m.media_url!} controls className="h-10 w-48 sm:w-56" />
+                      <div className={`flex items-center gap-1.5 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                        <p className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-neutral-400'}`}>
+                          {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        {isOwn && (
+                          <span className={`inline-flex ${isViewed ? 'text-green-300' : 'text-white/40'}`}>
+                            {isViewed ? <><Check className="w-2.5 h-2.5" /><Check className="w-2.5 h-2.5 -ml-1" /></> : <Check className="w-3 h-3" />}
+                          </span>
+                        )}
+                      </div>
+                    </>
                   ) : (
                     <>
                       {m.content && (
@@ -305,25 +414,32 @@ export default function ChatPage() {
                     </>
                   )}
 
-                  <div className={`flex items-center gap-1.5 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                    {isOwn && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteMessage(m.id) }}
-                        className="opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full flex items-center justify-center text-white/50 hover:text-red-300 hover:bg-white/10 transition-all"
-                        title="Delete message"
-                      >
-                        <X className="w-3 h-3" />
-                      </button>
-                    )}
-                    <p className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-neutral-400'}`}>
-                      {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                    {m.is_one_time && (
-                      <span className={`inline-flex items-center gap-0.5 text-[10px] ${isOwn ? 'text-white/70' : 'text-amber-500'}`}>
-                        {isViewed ? 'Viewed' : (isOwn ? 'Not viewed' : 'One-time')}
-                      </span>
-                    )}
-                  </div>
+                  {!isAudio && (
+                    <div className={`flex items-center gap-1.5 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                      {isOwn && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteMessage(m.id) }}
+                          className="opacity-0 group-hover:opacity-100 w-5 h-5 rounded-full flex items-center justify-center text-white/50 hover:text-red-300 hover:bg-white/10 transition-all"
+                          title="Delete message"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                      <p className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-neutral-400'}`}>
+                        {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      {isOwn && (
+                        <span className={`inline-flex ${isViewed ? 'text-green-300' : 'text-white/40'}`}>
+                          {isViewed ? <><Check className="w-2.5 h-2.5" /><Check className="w-2.5 h-2.5 -ml-1" /></> : <Check className="w-3 h-3" />}
+                        </span>
+                      )}
+                      {!isOwn && m.is_one_time && (
+                        <span className={`inline-flex items-center gap-0.5 text-[10px] text-amber-500`}>
+                          {isViewed ? 'Viewed' : 'One-time'}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )
@@ -354,78 +470,106 @@ export default function ChatPage() {
 
         <div className="flex gap-1.5 sm:gap-2 items-end">
           <div className="flex-1 flex items-center gap-0.5 sm:gap-1.5 bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
-            <button
-              type="button"
-              onClick={() => { if (fileRef.current) { fileRef.current.removeAttribute('capture'); fileRef.current.accept = 'image/*'; fileRef.current.click() } }}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
-              title="Send photo"
-            >
-              <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => { if (fileRef.current) { fileRef.current.removeAttribute('capture'); fileRef.current.accept = 'video/*'; fileRef.current.click() } }}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
-              title="Send video"
-            >
-              <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowCamera(true)}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
-              title="Take photo with camera"
-            >
-              <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            </button>
-            <input ref={fileRef} type="file" onChange={handleFileSelect} className="hidden" />
-
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder={`Message ${partnerName}...`}
-              maxLength={2000}
-              className="flex-1 bg-transparent py-1.5 sm:py-2 text-sm placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none min-w-0"
-            />
-
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowEmoji(!showEmoji)}
-                className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
-                title="Emoji"
-              >
-                <Smile className="w-4 h-4" />
-              </button>
-              {showEmoji && (
-                <div className="absolute bottom-10 right-0 w-64 bg-white dark:bg-neutral-800 rounded-2xl border border-gray-100 dark:border-neutral-700 shadow-elevated p-3 grid grid-cols-8 gap-1 z-50">
-                  {['😀','😍','🥰','😘','😊','❤️','💕','😅','😂','🤗','😭','😤','😈','🤔','🙄','😴','🥺','😎','😢','😏','💀','✨','🔥','💯','🎉','💪','🤝','🙏','💖','💔','😁','😋','🤩','😜','🤪','😝','🤑','🤭','🤫','😶','😐','😑','😬','😮','😲','🥱','😤','😠','🤬','😡','💋','👀','🗣️','👤','👥','💑','👫','🌹','🥀','💐','🌸','🌺','🌻','🌞','🌙','⭐','🌈','☀️','❄️','🔥','💧','🌊'].map(emoji => (
-                    <button
-                      key={emoji}
-                      type="button"
-                      onClick={() => { setInput(prev => prev + emoji); setShowEmoji(false) }}
-                      className="w-7 h-7 flex items-center justify-center text-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+            {recording ? (
+              <div className="flex items-center gap-2 w-full py-1">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
+                <span className="text-xs font-medium text-red-500">{formatTime(recordingTime)}</span>
+                <div className="flex-1 h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
+                  <div className="h-full bg-red-400 rounded-full animate-pulse" style={{ width: '60%' }} />
                 </div>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsOneTime(!isOneTime)}
-              className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                isOneTime ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-500' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-neutral-600'
-              }`}
-              title={isOneTime ? 'One-time view ON' : 'One-time view OFF'}
-            >
-              {isOneTime ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/50 text-red-500 hover:bg-red-200 dark:hover:bg-red-900 transition-colors shrink-0"
+                  title="Stop recording"
+                >
+                  <Square className="w-3.5 h-3.5 fill-current" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => { if (fileRef.current) { fileRef.current.removeAttribute('capture'); fileRef.current.accept = 'image/*'; fileRef.current.click() } }}
+                  className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
+                  title="Send photo"
+                >
+                  <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { if (fileRef.current) { fileRef.current.removeAttribute('capture'); fileRef.current.accept = 'video/*'; fileRef.current.click() } }}
+                  className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
+                  title="Send video"
+                >
+                  <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowCamera(true)}
+                  className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
+                  title="Take photo with camera"
+                >
+                  <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+                <input ref={fileRef} type="file" onChange={handleFileSelect} className="hidden" />
+
+                <input
+                  type="text"
+                  value={input}
+                  onChange={handleInputChange}
+                  placeholder={`Message ${partnerName}...`}
+                  maxLength={2000}
+                  className="flex-1 bg-transparent py-1.5 sm:py-2 text-sm placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none min-w-0"
+                />
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmoji(!showEmoji)}
+                    className="p-1 sm:p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
+                    title="Emoji"
+                  >
+                    <Smile className="w-4 h-4" />
+                  </button>
+                  {showEmoji && (
+                    <div className="absolute bottom-10 right-0 w-64 bg-white dark:bg-neutral-800 rounded-2xl border border-gray-100 dark:border-neutral-700 shadow-elevated p-3 grid grid-cols-8 gap-1 z-50">
+                      {['😀','😍','🥰','😘','😊','❤️','💕','😅','😂','🤗','😭','😤','😈','🤔','🙄','😴','🥺','😎','😢','😏','💀','✨','🔥','💯','🎉','💪','🤝','🙏','💖','💔','😁','😋','🤩','😜','🤪','😝','🤑','🤭','🤫','😶','😐','😑','😬','😮','😲','🥱','😤','😠','🤬','😡','💋','👀','🗣️','👤','👥','💑','👫','🌹','🥀','💐','🌸','🌺','🌻','🌞','🌙','⭐','🌈','☀️','❄️','🔥','💧','🌊'].map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => { setInput(prev => prev + emoji); setShowEmoji(false) }}
+                          className="w-7 h-7 flex items-center justify-center text-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsOneTime(!isOneTime)}
+                  className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                    isOneTime ? 'bg-amber-100 dark:bg-amber-900/50 text-amber-500' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-neutral-600'
+                  }`}
+                  title={isOneTime ? 'One-time view ON' : 'One-time view OFF'}
+                >
+                  {isOneTime ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+                <button
+                  type="button"
+                  onMouseDown={startRecording}
+                  className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
+                  title="Record voice note"
+                >
+                  <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </button>
+              </>
+            )}
           </div>
 
-          <Button type="submit" size="icon" disabled={sending || (!input.trim() && !file)} className="shrink-0 rounded-xl w-11 h-11">
+          <Button type="submit" size="icon" disabled={sending || (!input.trim() && !file) || recording} className="shrink-0 rounded-xl w-11 h-11">
             {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </Button>
         </div>
