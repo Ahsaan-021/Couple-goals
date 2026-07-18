@@ -497,29 +497,33 @@ export default function ChatPage() {
               <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">Chat Wallpaper</h3>
               <button onClick={() => setShowThemePicker(false)} className="text-neutral-400 hover:text-neutral-600"><X className="w-4 h-4" /></button>
             </div>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'None', value: null, bg: 'bg-neutral-100 dark:bg-neutral-800' },
-                { label: 'Rose', value: 'linear-gradient(135deg, #fce4ec, #f8bbd0)', bg: 'bg-rose-200' },
-                { label: 'Blue', value: 'linear-gradient(135deg, #e3f2fd, #bbdefb)', bg: 'bg-blue-200' },
-                { label: 'Green', value: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)', bg: 'bg-green-200' },
-                { label: 'Purple', value: 'linear-gradient(135deg, #f3e5f5, #e1bee7)', bg: 'bg-purple-200' },
-                { label: 'Amber', value: 'linear-gradient(135deg, #fff8e1, #ffecb3)', bg: 'bg-amber-200' },
-                { label: 'Sky', value: 'linear-gradient(135deg, #e0f7fa, #b2ebf2)', bg: 'bg-cyan-200' },
-                { label: 'Slate', value: 'linear-gradient(135deg, #f1f5f9, #cbd5e1)', bg: 'bg-slate-200' },
-                { label: 'Warm', value: 'linear-gradient(135deg, #fbe9e7, #ffccbc)', bg: 'bg-orange-200' },
-                { label: 'Lime', value: 'linear-gradient(135deg, #f9fbe7, #e6ee9c)', bg: 'bg-lime-200' },
-                { label: 'Indigo', value: 'linear-gradient(135deg, #e8eaf6, #c5cae9)', bg: 'bg-indigo-200' },
-                { label: 'Teal', value: 'linear-gradient(135deg, #e0f2f1, #b2dfdb)', bg: 'bg-teal-200' },
+                { label: 'Default', value: null, icon: '⊘' },
+                { label: 'Starry Night', value: 'radial-gradient(ellipse at 50% 0%, #1a1a4e 0%, #0a0a2e 50%, #050515 100%), radial-gradient(1px 1px at 10% 20%, rgba(255,255,255,0.8), transparent), radial-gradient(1.5px 1.5px at 25% 45%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 50% 15%, rgba(255,255,255,0.9), transparent), radial-gradient(1.5px 1.5px at 70% 35%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 85% 60%, rgba(255,255,255,0.7), transparent), radial-gradient(1px 1px at 15% 70%, rgba(255,255,255,0.4), transparent), radial-gradient(1.5px 1.5px at 90% 15%, rgba(255,255,255,0.6), transparent)', icon: '🌙' },
+                { label: 'Blessings', value: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', icon: '🤲' },
+                { label: 'Romance', value: 'linear-gradient(135deg, #ff9a9e 0%, #fad0c4 30%, #fbc2eb 60%, #a18cd1 100%)', icon: '💕' },
+                { label: 'Moonlight', value: 'linear-gradient(180deg, #0c1445 0%, #1a237e 30%, #283593 60%, #3949ab 100%), radial-gradient(ellipse at 80% 15%, rgba(255,255,240,0.15) 0%, transparent 50%)', icon: '🌕' },
+                { label: 'Nature', value: 'linear-gradient(135deg, #d4fc79 0%, #96e6a1 50%, #43e97b 100%)', icon: '🌿' },
+                { label: 'Ocean', value: 'linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 50%, #d4fcff 100%)', icon: '🌊' },
+                { label: 'Sunset', value: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 30%, #ff9a9e 50%, #fad0c4 70%, #a18cd1 100%)', icon: '🌅' },
+                { label: 'Dua', value: 'linear-gradient(135deg, #0f3443 0%, #34e89e 100%)', icon: '🕋' },
+                { label: 'Golden', value: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)', icon: '✨' },
+                { label: 'Peace', value: 'linear-gradient(135deg, #e8d5f5 0%, #d4b5e8 30%, #c2a0d6 60%, #b08cc4 100%)', icon: '☮' },
+                { label: 'Hearts', value: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a24 50%, #c0392b 100%)', icon: '❤️' },
+                { label: 'Twinkle', value: 'linear-gradient(180deg, #0d0d2b 0%, #1a1a4e 30%, #2d2d6b 60%, #1a1a4e 100%), radial-gradient(1px 1px at 5% 10%, rgba(255,255,255,0.9), transparent), radial-gradient(1.5px 1.5px at 15% 30%, rgba(255,255,255,0.7), transparent), radial-gradient(1px 1px at 35% 8%, rgba(255,255,255,0.6), transparent), radial-gradient(1px 1px at 50% 25%, rgba(255,255,255,0.8), transparent), radial-gradient(1.5px 1.5px at 65% 12%, rgba(255,255,255,0.5), transparent), radial-gradient(2px 2px at 80% 40%, rgba(255,255,255,0.7), transparent), radial-gradient(1px 1px at 92% 18%, rgba(255,255,255,0.6), transparent), radial-gradient(1.5px 1.5px at 45% 55%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 75% 70%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 10% 85%, rgba(255,255,255,0.3), transparent)', icon: '⭐' },
+                { label: 'Boho', value: 'linear-gradient(135deg, #f5f0e1 0%, #e8dcc8 30%, #d4c5a9 60%, #f5f0e1 100%)', icon: '🌾' },
               ].map((t) => (
                 <button
                   key={t.label}
                   onClick={() => { setWallpaper(t.value); setShowThemePicker(false) }}
-                  className={`aspect-square rounded-xl flex items-center justify-center text-xs font-medium text-neutral-600 dark:text-neutral-300 border-2 transition-all ${
-                    wallpaper === t.value ? 'border-rose-500 scale-105' : 'border-transparent hover:border-neutral-300 dark:hover:border-neutral-600'
-                  } ${t.bg}`}
+                  className={`aspect-square rounded-xl flex flex-col items-center justify-center gap-1 text-xs font-medium border-2 transition-all ${
+                    wallpaper === t.value ? 'border-rose-500 scale-105 ring-2 ring-rose-300' : 'border-transparent hover:border-neutral-300 dark:hover:border-neutral-600'
+                  } ${!t.value ? 'bg-neutral-100 dark:bg-neutral-800' : ''}`}
+                  style={t.value ? { background: t.value } : undefined}
                 >
-                  {t.label}
+                  <span className={!t.value ? 'text-neutral-400' : ''}>{t.icon}</span>
+                  <span className="text-neutral-600 dark:text-neutral-300 leading-tight text-center">{t.label}</span>
                 </button>
               ))}
             </div>
