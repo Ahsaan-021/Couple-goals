@@ -108,10 +108,10 @@ export default function ChatPage() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
         const m = payload.new as Message
         if (m.sender_id === user.id || m.receiver_id === user.id) {
-          setMessages((prev) => [...prev, m])
+          setMessages((prev) => prev.some(x => x.id === m.id) ? prev : [...prev, m])
           if (m.receiver_id === user.id && !m.viewed_at && !m.is_one_time) {
             supabase.from('messages').update({ viewed_at: new Date().toISOString() }).eq('id', m.id)
-            m.viewed_at = new Date().toISOString()
+            setMessages((prev) => prev.map((x) => x.id === m.id ? { ...x, viewed_at: x.viewed_at || new Date().toISOString() } : x))
             if (typingChannelRef.current) {
               typingChannelRef.current.send({ type: 'broadcast', event: 'messages_viewed', payload: { ids: [m.id] } })
             }
@@ -195,19 +195,35 @@ export default function ChatPage() {
     setSending(true)
     try {
       const formData = new FormData()
-      const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('aac') ? 'aac' : 'webm'
+      const ext = 'webm'
       formData.append('file', audioBlob, `voice_${Date.now()}.${ext}`)
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       const data = await res.json()
       if (data.url) {
-        const { data: msg } = await supabase.from('messages').insert({
+        const tempId = `temp_${Date.now()}`
+        const optimisticMsg = {
+          id: tempId,
+          sender_id: user.id,
+          receiver_id: profile.partner_id,
+          content: '',
+          media_url: data.url,
+          media_type: 'audio' as const,
+          is_one_time: null,
+          viewed_at: null,
+          deleted_at: null,
+          created_at: new Date().toISOString(),
+        }
+        setMessages((prev) => [...prev, optimisticMsg])
+        const { data: inserted } = await supabase.from('messages').insert({
           sender_id: user.id,
           receiver_id: profile.partner_id,
           content: '',
           media_url: data.url,
           media_type: 'audio',
-        }).select('*').single()
-        if (msg) setMessages((prev) => [...prev, msg])
+        }).select('id, created_at').single()
+        if (inserted) {
+          setMessages((prev) => prev.map((x) => x.id === tempId ? { ...optimisticMsg, id: inserted.id, created_at: inserted.created_at } : x))
+        }
         notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
       }
     } catch (e) {
@@ -268,6 +284,21 @@ export default function ChatPage() {
       const data = await res.json()
       if (data.url) mediaUrl = data.url
     }
+
+    const tempId = `temp_${Date.now()}`
+    const optimisticMsg = {
+      id: tempId,
+      sender_id: user.id,
+      receiver_id: profile.partner_id,
+      content: input.trim(),
+      media_url: mediaUrl,
+      media_type: mediaType,
+      is_one_time: isOneTime,
+      viewed_at: null,
+      deleted_at: null,
+      created_at: new Date().toISOString(),
+    }
+    setMessages((prev) => [...prev, optimisticMsg])
 
     await supabase.from('messages').insert({
       sender_id: user.id,
@@ -502,14 +533,6 @@ export default function ChatPage() {
                 <div className="flex-1 h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
                   <div className="h-full bg-red-400 rounded-full animate-pulse" style={{ width: '60%' }} />
                 </div>
-                <button
-                  type="button"
-                  onClick={stopRecording}
-                  className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/50 text-red-500 hover:bg-red-200 dark:hover:bg-red-900 transition-colors shrink-0"
-                  title="Stop recording"
-                >
-                  <Square className="w-3.5 h-3.5 fill-current" />
-                </button>
               </div>
             ) : (
               <>
@@ -584,11 +607,13 @@ export default function ChatPage() {
                 </button>
                 <button
                   type="button"
-                  onMouseDown={startRecording}
-                  className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500 transition-colors shrink-0"
-                  title="Record voice note"
+                  onClick={recording ? stopRecording : startRecording}
+                  className={`p-1.5 rounded-lg transition-colors shrink-0 ${
+                    recording ? 'bg-red-100 dark:bg-red-900/50 text-red-500' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500'
+                  }`}
+                  title={recording ? 'Stop recording' : 'Record voice note'}
                 >
-                  <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  {recording ? <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> : <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                 </button>
               </>
             )}
