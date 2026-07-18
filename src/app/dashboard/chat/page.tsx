@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Message, Profile } from '@/types'
 import { Button } from '@/components/ui/button'
-import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera, Smile, Mic, Square, Check } from 'lucide-react'
+import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera, Smile, Mic, Square, Check, Palette } from 'lucide-react'
 import { notifyMessage } from '@/lib/notifications'
 import CameraCapture from '@/components/AdvancedCamera'
 
@@ -63,6 +63,8 @@ export default function ChatPage() {
   const [partnerTyping, setPartnerTyping] = useState(false)
   const [recording, setRecording] = useState(false)
   const [recordingTime, setRecordingTime] = useState(0)
+  const [wallpaper, setWallpaper] = useState<string | null>(null)
+  const [showThemePicker, setShowThemePicker] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const prevLen = useRef(0)
@@ -100,6 +102,16 @@ export default function ChatPage() {
       setLoading(false)
     })()
   }, [user, profile])
+
+  useEffect(() => {
+    const saved = localStorage.getItem('chatWallpaper')
+    if (saved) setWallpaper(saved)
+  }, [])
+
+  useEffect(() => {
+    if (wallpaper) localStorage.setItem('chatWallpaper', wallpaper)
+    else localStorage.removeItem('chatWallpaper')
+  }, [wallpaper])
 
   useEffect(() => {
     if (!user) return
@@ -337,13 +349,18 @@ export default function ChatPage() {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="sm" onClick={clearChat} disabled={clearing || messages.length === 0} className="text-neutral-400 hover:text-red-500">
-          {clearing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-          <span className="ml-1.5 hidden sm:inline">Clear Chat</span>
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setShowThemePicker(true)} className="text-neutral-400 hover:text-rose-500">
+            <Palette className="w-4 h-4" />
+          </Button>
+          <Button variant="ghost" size="sm" onClick={clearChat} disabled={clearing || messages.length === 0} className="text-neutral-400 hover:text-red-500">
+            {clearing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            <span className="ml-1.5 hidden sm:inline">Clear Chat</span>
+          </Button>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1" style={wallpaper ? { background: wallpaper, backgroundSize: 'cover' } : undefined}>
         {loading ? (
           <div className="space-y-3 animate-pulse-soft">
             {[1, 2, 3, 4].map((i) => (
@@ -472,6 +489,43 @@ export default function ChatPage() {
       </div>
 
       {lightboxMsg && <Lightbox message={lightboxMsg} onClose={closeLightbox} />}
+
+      {showThemePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30" onClick={() => setShowThemePicker(false)}>
+          <div className="bg-white dark:bg-neutral-900 rounded-2xl p-4 shadow-elevated max-w-sm w-full mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">Chat Wallpaper</h3>
+              <button onClick={() => setShowThemePicker(false)} className="text-neutral-400 hover:text-neutral-600"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: 'None', value: null, bg: 'bg-neutral-100 dark:bg-neutral-800' },
+                { label: 'Rose', value: 'linear-gradient(135deg, #fce4ec, #f8bbd0)', bg: 'bg-rose-200' },
+                { label: 'Blue', value: 'linear-gradient(135deg, #e3f2fd, #bbdefb)', bg: 'bg-blue-200' },
+                { label: 'Green', value: 'linear-gradient(135deg, #e8f5e9, #c8e6c9)', bg: 'bg-green-200' },
+                { label: 'Purple', value: 'linear-gradient(135deg, #f3e5f5, #e1bee7)', bg: 'bg-purple-200' },
+                { label: 'Amber', value: 'linear-gradient(135deg, #fff8e1, #ffecb3)', bg: 'bg-amber-200' },
+                { label: 'Sky', value: 'linear-gradient(135deg, #e0f7fa, #b2ebf2)', bg: 'bg-cyan-200' },
+                { label: 'Slate', value: 'linear-gradient(135deg, #f1f5f9, #cbd5e1)', bg: 'bg-slate-200' },
+                { label: 'Warm', value: 'linear-gradient(135deg, #fbe9e7, #ffccbc)', bg: 'bg-orange-200' },
+                { label: 'Lime', value: 'linear-gradient(135deg, #f9fbe7, #e6ee9c)', bg: 'bg-lime-200' },
+                { label: 'Indigo', value: 'linear-gradient(135deg, #e8eaf6, #c5cae9)', bg: 'bg-indigo-200' },
+                { label: 'Teal', value: 'linear-gradient(135deg, #e0f2f1, #b2dfdb)', bg: 'bg-teal-200' },
+              ].map((t) => (
+                <button
+                  key={t.label}
+                  onClick={() => { setWallpaper(t.value); setShowThemePicker(false) }}
+                  className={`aspect-square rounded-xl flex items-center justify-center text-xs font-medium text-neutral-600 dark:text-neutral-300 border-2 transition-all ${
+                    wallpaper === t.value ? 'border-rose-500 scale-105' : 'border-transparent hover:border-neutral-300 dark:hover:border-neutral-600'
+                  } ${t.bg}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={sendMessage} className="mt-4 shrink-0 space-y-2">
         {filePreview && (
