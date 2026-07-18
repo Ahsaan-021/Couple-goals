@@ -193,19 +193,25 @@ export default function ChatPage() {
   const sendAudioMessage = async (audioBlob: Blob) => {
     if (!user || !profile?.partner_id) return
     setSending(true)
-    const formData = new FormData()
-    formData.append('file', audioBlob, `voice_${Date.now()}.webm`)
-    const res = await fetch('/api/upload', { method: 'POST', body: formData })
-    const data = await res.json()
-    if (data.url) {
-      await supabase.from('messages').insert({
-        sender_id: user.id,
-        receiver_id: profile.partner_id,
-        content: '',
-        media_url: data.url,
-        media_type: 'audio',
-      })
-      notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
+    try {
+      const formData = new FormData()
+      const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('aac') ? 'aac' : 'webm'
+      formData.append('file', audioBlob, `voice_${Date.now()}.${ext}`)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.url) {
+        const { data: msg } = await supabase.from('messages').insert({
+          sender_id: user.id,
+          receiver_id: profile.partner_id,
+          content: '',
+          media_url: data.url,
+          media_type: 'audio',
+        }).select('*').single()
+        if (msg) setMessages((prev) => [...prev, msg])
+        notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
+      }
+    } catch (e) {
+      console.error('Send audio failed:', e)
     }
     setSending(false)
   }
@@ -213,20 +219,28 @@ export default function ChatPage() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac', '']
+      let mimeType = ''
+      for (const mt of mimeTypes) {
+        if (mt && MediaRecorder.isTypeSupported(mt)) { mimeType = mt; break }
+      }
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {})
       mediaRecorderRef.current = recorder
       audioChunksRef.current = []
       recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
       recorder.onstop = () => {
         stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const type = mimeType || 'audio/webm'
+        const blob = new Blob(audioChunksRef.current, { type })
         if (blob.size > 0) sendAudioMessage(blob)
       }
       recorder.start()
       setRecording(true)
       setRecordingTime(0)
       recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000)
-    } catch { /* permission denied */ }
+    } catch (e) {
+      console.error('Recording failed:', e)
+    }
   }
 
   const stopRecording = () => {
@@ -379,7 +393,7 @@ export default function ChatPage() {
                     </button>
                   ) : isAudio ? (
                     <>
-                      <audio src={m.media_url!} controls className="h-10 w-48 sm:w-56" />
+                      <audio src={m.media_url!} controls className="h-10 w-full max-w-[200px]" />
                       <div className={`flex items-center gap-1.5 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
                         <p className={`text-[10px] ${isOwn ? 'text-white/60' : 'text-neutral-400'}`}>
                           {new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
