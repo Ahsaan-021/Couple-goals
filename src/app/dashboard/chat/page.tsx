@@ -197,17 +197,17 @@ export default function ChatPage() {
       formData.append('file', audioBlob, `voice_${Date.now()}.webm`)
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       const data = await res.json()
-      if (data.url) {
-        const { data: msg } = await supabase.from('messages').insert({
-          sender_id: user.id,
-          receiver_id: profile.partner_id,
-          content: '',
-          media_url: data.url,
-          media_type: 'audio',
-        }).select('*').single()
-        if (msg) setMessages((prev) => [...prev, msg])
-        notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
-      }
+      if (!data.url) { console.error('Audio upload failed', data); return }
+
+      await supabase.from('messages').insert({
+        sender_id: user.id,
+        receiver_id: profile.partner_id,
+        content: '',
+        media_url: data.url,
+        media_type: 'audio',
+      })
+
+      notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
     } catch (e) {
       console.error('Send audio failed:', e)
     }
