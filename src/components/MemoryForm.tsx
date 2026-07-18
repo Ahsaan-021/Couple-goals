@@ -4,19 +4,22 @@ import { useState, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
-import { ImagePlus, Video, Loader2, X, Send } from 'lucide-react'
+import { ImagePlus, Video, Loader2, X, Send, Camera } from 'lucide-react'
+import { notifyMemoryAdded } from '@/lib/notifications'
+import CameraCapture from '@/components/Camera'
 
 interface MemoryFormProps {
   onMemoryAdded: () => void
 }
 
 export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [content, setContent] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [fileType, setFileType] = useState<'image' | 'video' | null>(null)
   const [saving, setSaving] = useState(false)
+  const [showCamera, setShowCamera] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,6 +29,14 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
       setPreview(URL.createObjectURL(f))
       setFileType(f.type.startsWith('video/') ? 'video' : 'image')
     }
+  }
+
+  const handleCameraCapture = (blob: Blob) => {
+    const f = new File([blob], `camera_${Date.now()}.jpg`, { type: 'image/jpeg' })
+    setFile(f)
+    setPreview(URL.createObjectURL(blob))
+    setFileType('image')
+    setShowCamera(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,18 +49,11 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
 
     if (file) {
       mediaType = file.type.startsWith('video/') ? 'video' : 'image'
-      const ext = file.name.split('.').pop()
-      const filePath = `${user.id}/${Date.now()}.${ext}`
-      const { data: uploadData } = await supabase.storage
-        .from('memories')
-        .upload(filePath, file)
-
-      if (uploadData) {
-        const { data: { publicUrl } } = supabase.storage
-          .from('memories')
-          .getPublicUrl(filePath)
-        mediaUrl = publicUrl
-      }
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (data.url) mediaUrl = data.url
     }
 
     await supabase.from('memories').insert({
@@ -58,6 +62,10 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
       image_url: mediaUrl,
       media_type: mediaType,
     })
+
+    if (profile?.partner_id) {
+      notifyMemoryAdded(profile.partner_id, user.id, content.trim() || undefined)
+    }
 
     setContent('')
     setFile(null)
@@ -102,27 +110,35 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
         </div>
       )}
 
-      <div className="flex items-center justify-between pt-1">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => {
-              if (fileRef.current) { fileRef.current.accept = 'image/*'; fileRef.current.click() }
+              if (fileRef.current) { fileRef.current.accept = 'image/*'; fileRef.current.removeAttribute('capture'); fileRef.current.click() }
             }}
-            className="inline-flex items-center gap-1.5 text-sm text-neutral-400 hover:text-rose-500 transition-colors"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm text-neutral-400 hover:text-rose-500 transition-colors"
           >
-            <ImagePlus className="w-4 h-4" />
+            <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Photo
           </button>
           <button
             type="button"
             onClick={() => {
-              if (fileRef.current) { fileRef.current.accept = 'video/*'; fileRef.current.click() }
+              if (fileRef.current) { fileRef.current.accept = 'video/*'; fileRef.current.removeAttribute('capture'); fileRef.current.click() }
             }}
-            className="inline-flex items-center gap-1.5 text-sm text-neutral-400 hover:text-rose-500 transition-colors"
+            className="inline-flex items-center gap-1 text-xs sm:text-sm text-neutral-400 hover:text-rose-500 transition-colors"
           >
-            <Video className="w-4 h-4" />
+            <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             Video
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCamera(true)}
+            className="inline-flex items-center gap-1 text-xs sm:text-sm text-neutral-400 hover:text-rose-500 transition-colors"
+          >
+            <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            Camera
           </button>
         </div>
         <input ref={fileRef} type="file" onChange={handleFileSelect} className="hidden" />
@@ -134,6 +150,7 @@ export default function MemoryForm({ onMemoryAdded }: MemoryFormProps) {
           )}
         </Button>
       </div>
+      {showCamera && <CameraCapture onCapture={handleCameraCapture} onClose={() => setShowCamera(false)} />}
     </form>
   )
 }

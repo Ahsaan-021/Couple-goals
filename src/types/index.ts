@@ -9,6 +9,7 @@ export interface Profile {
   age: number | null
   dob: string | null
   bio: string | null
+  whatsapp_number: string | null
   created_at: string
 }
 
@@ -39,6 +40,7 @@ export interface Memory {
   content: string
   image_url: string | null
   media_type: string | null
+  deleted_at: string | null
   created_at: string
 }
 
@@ -51,6 +53,7 @@ export interface Message {
   media_type: string | null
   is_one_time: boolean | null
   viewed_at: string | null
+  deleted_at: string | null
   created_at: string
 }
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import { Status, Schedule, PartnerStatus } from '@/types'
+import { Status, Schedule, PartnerStatus, Profile } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import StatusSelector from '@/components/StatusSelector'
@@ -15,11 +15,11 @@ import { Heart, MessageCircle, Sparkles, Clock, ChevronRight, StickyNote, Check,
 function DashboardSkeleton() {
   return (
     <div className="space-y-5 animate-pulse-soft">
-      <div className="h-8 w-48 bg-neutral-100 rounded-lg" />
-      <div className="h-4 w-32 bg-neutral-100 rounded-lg" />
-      <div className="h-32 bg-white rounded-2xl border border-gray-50" />
-      <div className="h-48 bg-white rounded-2xl border border-gray-50" />
-      <div className="h-64 bg-white rounded-2xl border border-gray-50" />
+      <div className="h-8 w-48 bg-neutral-100 dark:bg-neutral-800 rounded-lg" />
+      <div className="h-4 w-32 bg-neutral-100 dark:bg-neutral-800 rounded-lg" />
+      <div className="h-32 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-50 dark:border-neutral-800" />
+      <div className="h-48 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-50 dark:border-neutral-800" />
+      <div className="h-64 bg-white dark:bg-neutral-900 rounded-2xl border border-gray-50 dark:border-neutral-800" />
     </div>
   )
 }
@@ -53,8 +53,8 @@ export default function DashboardPage() {
         .eq('user_id', partnerData.id)
         .maybeSingle()
 
-      setPartner({
-        profile: partnerData,
+        setPartner({
+          profile: partnerData as Profile,
         status: partnerStatus,
         is_online: false,
       })
@@ -148,11 +148,11 @@ export default function DashboardPage() {
     <div className="space-y-6 max-w-3xl mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 flex items-center gap-2.5">
+          <h1 className="text-2xl md:text-3xl font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-2.5">
             Hello, {profile?.name?.split(' ')[0] || 'there'}
             <Sparkles className="w-5 h-5 text-amber-400" />
           </h1>
-          <p className="text-sm text-neutral-400 mt-1">{today}</p>
+          <p className="text-sm text-neutral-400 dark:text-neutral-500 mt-1">{today}</p>
         </div>
         {partnerPhone && (
           <Button variant="outline" size="sm" onClick={openWhatsApp} className="shrink-0">
@@ -163,15 +163,15 @@ export default function DashboardPage() {
       </div>
 
       {!profile?.partner_id && (
-        <div className="rounded-2xl bg-amber-50 border border-amber-200/50 p-4 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+        <div className="rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-900 p-4 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
             <Heart className="w-4 h-4 text-amber-500" />
           </div>
-          <p className="text-sm text-amber-700 flex-1">
+          <p className="text-sm text-amber-700 dark:text-amber-300 flex-1">
             Connect with your partner to share status and memories.
           </p>
           <Link href="/dashboard/settings">
-            <Button variant="outline" size="sm" className="shrink-0 text-amber-700 border-amber-200 hover:bg-amber-100">
+            <Button variant="outline" size="sm" className="shrink-0 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/30">
               Settings
               <ChevronRight className="w-3.5 h-3.5 ml-1" />
             </Button>
@@ -220,11 +220,11 @@ export default function DashboardPage() {
                 value={noteContent}
                 onChange={(e) => { setNoteContent(e.target.value); setNoteDirty(true); setNoteSaved(false) }}
                 placeholder="Write a quick note for yourself..."
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-rose-200 focus:ring-1 focus:ring-rose-200 transition-all resize-none h-24"
+                className="w-full rounded-xl border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 dark:text-neutral-100 px-4 py-3 text-sm outline-none focus:border-rose-200 dark:focus:border-rose-700 focus:ring-1 focus:ring-rose-200 dark:focus:ring-rose-900/30 transition-all resize-none h-24 dark:placeholder:text-neutral-500"
                 maxLength={500}
               />
               <div className="flex items-center justify-between">
-                <p className="text-xs text-neutral-400">{noteContent.length}/500</p>
+                <p className="text-xs text-neutral-400 dark:text-neutral-500">{noteContent.length}/500</p>
                 <Button
                   size="sm"
                   onClick={saveNote}

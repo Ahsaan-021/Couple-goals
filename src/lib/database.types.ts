@@ -117,6 +117,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
           id: string
           image_url: string | null
           media_type: string | null
@@ -125,6 +126,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           image_url?: string | null
           media_type?: string | null
@@ -133,6 +135,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           image_url?: string | null
           media_type?: string | null
@@ -152,6 +155,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
           id: string
           is_one_time: boolean | null
           media_type: string | null
@@ -163,6 +167,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_one_time?: boolean | null
           media_type?: string | null
@@ -174,6 +179,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           is_one_time?: boolean | null
           media_type?: string | null
@@ -193,6 +199,54 @@ export type Database = {
           {
             foreignKeyName: "messages_sender_id_fkey"
             columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          actor_id: string | null
+          type: string
+          title: string
+          body: string | null
+          read: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          actor_id?: string | null
+          type: string
+          title: string
+          body?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          actor_id?: string | null
+          type?: string
+          title?: string
+          body?: string | null
+          read?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey"
+            columns: ["actor_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -244,6 +298,7 @@ export type Database = {
           pairing_code: string | null
           pairing_code_created_by: string | null
           partner_id: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           age?: number | null
@@ -257,6 +312,7 @@ export type Database = {
           pairing_code?: string | null
           pairing_code_created_by?: string | null
           partner_id?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           age?: number | null
@@ -270,6 +326,7 @@ export type Database = {
           pairing_code?: string | null
           pairing_code_created_by?: string | null
           partner_id?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: [
           {

@@ -7,15 +7,14 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Heart, Loader2, CheckCircle, ArrowLeft } from 'lucide-react'
-import { FcGoogle } from 'react-icons/fc'
-import { FaFacebook } from 'react-icons/fa'
+import { Heart, Loader2, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react'
 
 export default function RegisterPage() {
   const router = useRouter()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -25,11 +24,13 @@ export default function RegisterPage() {
     setError('')
     setLoading(true)
 
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://couple-goals-omega.vercel.app'
     const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { name },
+        emailRedirectTo: `${siteUrl}/auth/callback`,
       },
     })
 
@@ -47,28 +48,18 @@ export default function RegisterPage() {
     setLoading(false)
   }
 
-  const handleOAuth = async (provider: 'google' | 'facebook') => {
-    setLoading(true)
-    setError('')
-    const { error: err } = await supabase.auth.signInWithOAuth({ provider })
-    if (err) {
-      setError(err.message)
-      setLoading(false)
-    }
-  }
-
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6 bg-white">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-white dark:bg-neutral-950">
         <div className="w-full max-w-sm text-center animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 rounded-full bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-emerald-500" />
           </div>
-          <h1 className="text-2xl font-bold text-neutral-900">Check your email</h1>
-          <p className="text-sm text-neutral-500 mt-2">
-            We sent a confirmation link to <strong className="text-neutral-700">{email}</strong>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Check your email</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2">
+            We sent a confirmation link to <strong className="text-neutral-700 dark:text-neutral-300">{email}</strong>
           </p>
-          <p className="text-xs text-neutral-400 mt-2">Please confirm your email before signing in.</p>
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-2">Please confirm your email before signing in.</p>
           <Link href="/auth/login">
             <Button variant="outline" className="mt-6">
               <ArrowLeft className="w-4 h-4 mr-1.5" />
@@ -81,17 +72,17 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-white">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-white dark:bg-neutral-950">
       <div className="w-full max-w-sm animate-fade-in">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-neutral-100 flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-7 h-7 text-neutral-600" />
+          <div className="w-14 h-14 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-7 h-7 text-neutral-600 dark:text-neutral-300" />
           </div>
-          <h1 className="text-2xl font-bold text-neutral-900">Create your space</h1>
-          <p className="text-sm text-neutral-500 mt-1">A platform to stay connected</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Create your space</h1>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">A platform to stay connected</p>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-card p-6">
+        <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-gray-100 dark:border-neutral-800 shadow-sm p-6">
           <form onSubmit={handleRegister} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="name">Your Name</Label>
@@ -120,21 +111,31 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
-                className="h-11"
-              />
-              <p className="text-xs text-neutral-400">At least 6 characters</p>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  className="h-11 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <p className="text-xs text-neutral-400 dark:text-neutral-500">At least 6 characters</p>
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 rounded-xl p-3 border border-red-100">
+              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 rounded-xl p-3 border border-red-100 dark:border-red-900">
                 {error}
               </div>
             )}
@@ -143,30 +144,10 @@ export default function RegisterPage() {
               {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               {loading ? 'Creating...' : 'Create Space'}
             </Button>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-neutral-400">or continue with</span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <Button type="button" variant="outline" onClick={() => handleOAuth('google')} disabled={loading} className="h-11">
-                <FcGoogle className="w-5 h-5 mr-2" />
-                Google
-              </Button>
-              <Button type="button" variant="outline" onClick={() => handleOAuth('facebook')} disabled={loading} className="h-11">
-                <FaFacebook className="w-5 h-5 mr-2 text-blue-600" />
-                Facebook
-              </Button>
-            </div>
           </form>
         </div>
 
-        <p className="text-center text-sm text-neutral-500 mt-6">
+        <p className="text-center text-sm text-neutral-500 dark:text-neutral-400 mt-6">
           Already have a space?{' '}
           <Link href="/auth/login" className="text-rose-500 hover:text-rose-600 font-medium">
             Sign in
