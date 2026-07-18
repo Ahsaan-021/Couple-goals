@@ -92,6 +92,9 @@ export default function ChatPage() {
         .map(m => m.id)
       if (unviewedIds.length > 0) {
         await supabase.from('messages').update({ viewed_at: new Date().toISOString() }).in('id', unviewedIds)
+        if (typingChannelRef.current) {
+          typingChannelRef.current.send({ type: 'broadcast', event: 'messages_viewed', payload: { ids: unviewedIds } })
+        }
       }
 
       setLoading(false)
@@ -109,6 +112,9 @@ export default function ChatPage() {
           if (m.receiver_id === user.id && !m.viewed_at && !m.is_one_time) {
             supabase.from('messages').update({ viewed_at: new Date().toISOString() }).eq('id', m.id)
             m.viewed_at = new Date().toISOString()
+            if (typingChannelRef.current) {
+              typingChannelRef.current.send({ type: 'broadcast', event: 'messages_viewed', payload: { ids: [m.id] } })
+            }
           }
         }
       })
@@ -133,6 +139,11 @@ export default function ChatPage() {
       clearTimeout((typingChannel as any)._typingTimer)
       const timer = setTimeout(() => setPartnerTyping(false), 3000)
       ;(typingChannel as any)._typingTimer = timer
+    }).on('broadcast', { event: 'messages_viewed' }, (payload: any) => {
+      const ids = payload.payload?.ids || []
+      if (ids.length > 0) {
+        setMessages((prev) => prev.map((x) => ids.includes(x.id) ? { ...x, viewed_at: x.viewed_at || new Date().toISOString() } : x))
+      }
     }).subscribe()
     typingChannelRef.current = typingChannel
     return () => { supabase.removeChannel(typingChannel) }
