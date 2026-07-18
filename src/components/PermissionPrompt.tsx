@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { X, Camera, Mic, Bell } from 'lucide-react'
+import { X, Camera, Mic, Bell, Shield } from 'lucide-react'
 
 interface PermissionState {
   camera: 'prompt' | 'granted' | 'denied' | 'unavailable'
@@ -10,7 +10,7 @@ interface PermissionState {
 }
 
 export default function PermissionPrompt() {
-  const [dismissed, setDismissed] = useState(true)
+  const [visible, setVisible] = useState(false)
   const [perms, setPerms] = useState<PermissionState>({
     camera: 'unavailable', microphone: 'unavailable', notifications: 'unavailable',
   })
@@ -18,24 +18,25 @@ export default function PermissionPrompt() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const sd = sessionStorage.getItem('perms_dismissed')
-    if (sd) { setDismissed(true); return }
+    if (sd) return
     const p: PermissionState = { camera: 'unavailable', microphone: 'unavailable', notifications: 'unavailable' }
-    if ('permissions' in navigator) {
-      Promise.all([
-        navigator.permissions.query({ name: 'camera' as PermissionName }).then(r => { p.camera = r.state as any }).catch(() => {}),
-        navigator.permissions.query({ name: 'microphone' as PermissionName }).then(r => { p.microphone = r.state as any }).catch(() => {}),
-      ]).then(() => {
-        if (!('Notification' in window)) p.notifications = 'unavailable'
-        else p.notifications = Notification.permission as any
-        const needs = Object.values(p).some(v => v === 'prompt')
-        setPerms(p)
-        if (needs) setDismissed(false)
-        else sessionStorage.setItem('perms_dismissed', '1')
-      })
-    } else {
-      setPerms(p)
-      setDismissed(false)
+    const check = async () => {
+      if ('permissions' in navigator) {
+        await Promise.all([
+          navigator.permissions.query({ name: 'camera' as PermissionName }).then(r => { p.camera = r.state as any }).catch(() => {}),
+          navigator.permissions.query({ name: 'microphone' as PermissionName }).then(r => { p.microphone = r.state as any }).catch(() => {}),
+        ]).catch(() => {})
+      } else {
+        p.camera = 'prompt'; p.microphone = 'prompt'
+      }
+      if ('Notification' in window) p.notifications = Notification.permission as any
+      else p.notifications = 'unavailable'
+      setPerms({ ...p })
+      const needs = Object.values(p).some(v => v === 'prompt' || v === 'denied')
+      if (needs) setVisible(true)
+      else sessionStorage.setItem('perms_dismissed', '1')
     }
+    check()
   }, [])
 
   const ask = async (type: 'camera' | 'microphone' | 'notifications') => {
@@ -55,52 +56,56 @@ export default function PermissionPrompt() {
   }
 
   const askAll = async () => {
-    await Promise.all([ask('camera'), ask('microphone'), ask('notifications')])
+    await Promise.allSettled([ask('camera'), ask('microphone'), ask('notifications')])
     handleDismiss()
   }
 
   const handleDismiss = () => {
-    setDismissed(true)
+    setVisible(false)
     sessionStorage.setItem('perms_dismissed', '1')
   }
 
-  if (dismissed) return null
+  if (!visible) return null
 
-  const needsCamera = perms.camera === 'prompt'
-  const needsMic = perms.microphone === 'prompt'
-  const needsNotif = perms.notifications === 'prompt'
+  const items = [
+    { key: 'camera' as const, label: 'Camera', icon: Camera, needs: perms.camera === 'prompt' || perms.camera === 'denied', status: perms.camera },
+    { key: 'microphone' as const, label: 'Microphone', icon: Mic, needs: perms.microphone === 'prompt' || perms.microphone === 'denied', status: perms.microphone },
+    { key: 'notifications' as const, label: 'Notifications', icon: Bell, needs: perms.notifications === 'prompt' || perms.notifications === 'denied', status: perms.notifications },
+  ]
 
-  if (!needsCamera && !needsMic && !needsNotif) return null
+  const hasAny = items.some(i => i.needs)
+
+  if (!hasAny) return null
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] w-[90vw] max-w-md">
       <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-100 dark:border-neutral-700 shadow-elevated p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Enable Permissions</p>
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4 text-rose-500" />
+            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Enable Permissions</p>
+          </div>
           <button onClick={handleDismiss} className="p-0.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400">
             <X className="w-4 h-4" />
           </button>
         </div>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400">Allow access for the best experience</p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">Allow access for camera, mic & notifications</p>
         <div className="flex gap-2">
-          {needsCamera && (
-            <button onClick={() => ask('camera')} className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
-              <Camera className="w-5 h-5 text-neutral-500" />
-              <span className="text-[10px] text-neutral-500 font-medium">Camera</span>
+          {items.filter(i => i.needs).map(item => (
+            <button
+              key={item.key}
+              onClick={() => ask(item.key)}
+              className={`flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl transition-colors ${
+                item.status === 'denied'
+                  ? 'bg-red-50 dark:bg-red-950/30 text-red-400'
+                  : 'bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500'
+              }`}
+            >
+              <item.icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{item.label}</span>
+              {item.status === 'denied' && <span className="text-[8px]">Blocked</span>}
             </button>
-          )}
-          {needsMic && (
-            <button onClick={() => ask('microphone')} className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
-              <Mic className="w-5 h-5 text-neutral-500" />
-              <span className="text-[10px] text-neutral-500 font-medium">Microphone</span>
-            </button>
-          )}
-          {needsNotif && (
-            <button onClick={() => ask('notifications')} className="flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-900 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
-              <Bell className="w-5 h-5 text-neutral-500" />
-              <span className="text-[10px] text-neutral-500 font-medium">Notifications</span>
-            </button>
-          )}
+          ))}
         </div>
         <div className="flex gap-2">
           <button onClick={handleDismiss} className="flex-1 py-2 text-xs font-medium text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors">

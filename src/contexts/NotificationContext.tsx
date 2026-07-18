@@ -102,7 +102,16 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       .order('created_at', { ascending: false })
       .limit(50)
       .then(({ data }) => {
-        if (data) setNotifications(data as AppNotification[])
+        if (data) {
+          const oneHourAgo = new Date(Date.now() - 3600000).toISOString()
+          const oldMsgIds = data.filter(n => n.type === 'message' && n.created_at < oneHourAgo).map(n => n.id)
+          if (oldMsgIds.length > 0) {
+            supabase.from('notifications').delete().in('id', oldMsgIds)
+            setNotifications((data.filter(n => !oldMsgIds.includes(n.id))) as AppNotification[])
+          } else {
+            setNotifications(data as AppNotification[])
+          }
+        }
       })
 
     const channel = supabase

@@ -37,8 +37,8 @@ export default function AdvancedCamera({ onCapture, onClose }: CameraProps) {
       streamRef.current = stream
       if (videoRef.current) videoRef.current.srcObject = stream
       setError('')
-    } catch {
-      setError('Camera access denied or not available')
+    } catch (e: any) {
+      setError(e?.name === 'NotAllowedError' ? 'Camera permission denied. Please allow camera access in your browser settings and reload.' : 'Camera not available or already in use')
     }
   }, [facingMode])
 
