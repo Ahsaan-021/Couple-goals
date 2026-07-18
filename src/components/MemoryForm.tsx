@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { ImagePlus, Video, Loader2, X, Send, Camera } from 'lucide-react'
 import { notifyMemoryAdded } from '@/lib/notifications'
-import CameraCapture from '@/components/Camera'
+import CameraCapture from '@/components/AdvancedCamera'
 
 interface MemoryFormProps {
   onMemoryAdded: () => void

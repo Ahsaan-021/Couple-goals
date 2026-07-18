@@ -7,7 +7,7 @@ import { Message, Profile } from '@/types'
 import { Button } from '@/components/ui/button'
 import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera, Smile } from 'lucide-react'
 import { notifyMessage } from '@/lib/notifications'
-import CameraCapture from '@/components/Camera'
+import CameraCapture from '@/components/AdvancedCamera'
 
 function Lightbox({ message, onClose }: { message: Message; onClose: () => void }) {
   const isVideo = message.media_type === 'video'
