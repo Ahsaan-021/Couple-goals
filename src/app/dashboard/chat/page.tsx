@@ -5,15 +5,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Message, Profile } from '@/types'
 import { Button } from '@/components/ui/button'
-import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera, Smile, Mic, Square, Check, Palette } from 'lucide-react'
+import { MessageCircle, Send, Trash2, Loader2, Heart, ImagePlus, Video, Eye, EyeOff, Play, X, Maximize2, Camera, Smile, Check, Palette } from 'lucide-react'
 import { notifyMessage } from '@/lib/notifications'
 import CameraCapture from '@/components/AdvancedCamera'
-
-function formatTime(seconds: number) {
-  const m = Math.floor(seconds / 60)
-  const s = seconds % 60
-  return `${m}:${s.toString().padStart(2, '0')}`
-}
 
 function Lightbox({ message, onClose }: { message: Message; onClose: () => void }) {
   const isVideo = message.media_type === 'video'
@@ -61,16 +55,11 @@ export default function ChatPage() {
   const [showEmoji, setShowEmoji] = useState(false)
   const [showCamera, setShowCamera] = useState(false)
   const [partnerTyping, setPartnerTyping] = useState(false)
-  const [recording, setRecording] = useState(false)
-  const [recordingTime, setRecordingTime] = useState(0)
   const [wallpaper, setWallpaper] = useState<string | null>(null)
   const [showThemePicker, setShowThemePicker] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const prevLen = useRef(0)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const audioChunksRef = useRef<Blob[]>([])
-  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const typingChannelRef = useRef<any>(null)
 
@@ -200,65 +189,6 @@ export default function ChatPage() {
     setFile(null)
     setFilePreview(null)
     setFileMediaType(null)
-  }
-
-  const sendAudioMessage = async (audioBlob: Blob) => {
-    if (!user || !profile?.partner_id) return
-    try {
-      const formData = new FormData()
-      formData.append('file', audioBlob, `voice_${Date.now()}.webm`)
-      const res = await fetch('/api/upload', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (!data.url) { console.error('Audio upload failed', data); return }
-
-      await supabase.from('messages').insert({
-        sender_id: user.id,
-        receiver_id: profile.partner_id,
-        content: '',
-        media_url: data.url,
-        media_type: 'audio',
-      })
-
-      notifyMessage(profile.partner_id, user.id, 'Sent a voice note')
-    } catch (e) {
-      console.error('Send audio failed:', e)
-    }
-  }
-
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac', '']
-      let mimeType = ''
-      for (const mt of mimeTypes) {
-        if (mt && MediaRecorder.isTypeSupported(mt)) { mimeType = mt; break }
-      }
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : {})
-      mediaRecorderRef.current = recorder
-      audioChunksRef.current = []
-      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
-      recorder.onstop = () => {
-        stream.getTracks().forEach(t => t.stop())
-        const type = mimeType || 'audio/webm'
-        const blob = new Blob(audioChunksRef.current, { type })
-        if (blob.size > 0) sendAudioMessage(blob)
-      }
-      recorder.start()
-      setRecording(true)
-      setRecordingTime(0)
-      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000)
-    } catch (e) {
-      console.error('Recording failed:', e)
-    }
-  }
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop()
-    }
-    setRecording(false)
-    clearInterval(recordingTimerRef.current)
-    recordingTimerRef.current = undefined
   }
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -551,15 +481,6 @@ export default function ChatPage() {
 
         <div className="flex gap-1.5 sm:gap-2 items-end">
           <div className="flex-1 flex items-center gap-0.5 sm:gap-1.5 bg-white dark:bg-neutral-800 rounded-xl border border-gray-200 dark:border-neutral-700 px-2 sm:px-3 py-1 sm:py-1.5 min-w-0">
-            {recording ? (
-              <div className="flex items-center gap-2 w-full py-1">
-                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" />
-                <span className="text-xs font-medium text-red-500">{formatTime(recordingTime)}</span>
-                <div className="flex-1 h-1 bg-neutral-200 dark:bg-neutral-700 rounded-full overflow-hidden">
-                  <div className="h-full bg-red-400 rounded-full animate-pulse" style={{ width: '60%' }} />
-                </div>
-              </div>
-            ) : (
               <>
                 <button
                   type="button"
@@ -630,21 +551,10 @@ export default function ChatPage() {
                 >
                   {isOneTime ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
-                <button
-                  type="button"
-                  onClick={recording ? stopRecording : startRecording}
-                  className={`p-1.5 rounded-lg transition-colors shrink-0 ${
-                    recording ? 'bg-red-100 dark:bg-red-900/50 text-red-500' : 'hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-400 hover:text-rose-500'
-                  }`}
-                  title={recording ? 'Stop recording' : 'Record voice note'}
-                >
-                  {recording ? <Square className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> : <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                </button>
               </>
-            )}
           </div>
 
-          <Button type="submit" size="icon" disabled={sending || (!input.trim() && !file) || recording} className="shrink-0 rounded-xl w-11 h-11">
+          <Button type="submit" size="icon" disabled={sending || (!input.trim() && !file)} className="shrink-0 rounded-xl w-11 h-11">
             {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </Button>
         </div>
