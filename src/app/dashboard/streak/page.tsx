@@ -27,7 +27,11 @@ export default function StreakPage() {
           const active = data.filter((m: Memory) => !m.deleted_at)
           setTotalMemories(active.length)
           setTotalPhotos(active.filter((m: Memory) => m.media_type === 'image').length)
-          if (active.length > 0) {
+          // If partner is disconnected or no partner connected, streak is 0
+          const isDisconnected = partnerDisconnected || !profile?.partner_id
+          if (isDisconnected) {
+            setDaysTogether(0)
+          } else if (active.length > 0) {
             const last = active[active.length - 1]
             const days = Math.floor((Date.now() - new Date(last.created_at).getTime()) / (1000 * 60 * 60 * 24))
             setDaysTogether(days)
@@ -35,7 +39,7 @@ export default function StreakPage() {
         }
         setLoading(false)
       })
-  }, [user])
+  }, [user, partnerDisconnected, profile?.partner_id])
 
   useEffect(() => {
     if (!profile) return
