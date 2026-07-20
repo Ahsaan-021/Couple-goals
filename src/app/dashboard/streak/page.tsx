@@ -6,14 +6,15 @@ import { supabase } from '@/lib/supabase'
 import { Memory } from '@/types'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
-import { Flame, CalendarDays, BookHeart, Camera, Heart } from 'lucide-react'
+import { Flame, CalendarDays, BookHeart, Camera, Heart, History, Trash2, Users } from 'lucide-react'
 
 export default function StreakPage() {
-  const { user, profile } = useAuth()
+  const { user, profile, partnerDisconnected } = useAuth()
   const [daysTogether, setDaysTogether] = useState(0)
   const [totalMemories, setTotalMemories] = useState(0)
   const [totalPhotos, setTotalPhotos] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [partnerName, setPartnerName] = useState<string | null>(null)
 
   useEffect(() => {
     if (!user) return
@@ -36,6 +37,34 @@ export default function StreakPage() {
       })
   }, [user])
 
+  useEffect(() => {
+    if (!profile) return
+
+    if (profile.partner_id) {
+      supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', profile.partner_id)
+        .single()
+        .then(({ data }) => {
+          if (data) setPartnerName(data.name)
+        })
+    } else {
+      setPartnerName(null)
+    }
+  }, [profile])
+
+  const disconnectPartner = async () => {
+    if (!user) return
+
+    const { data } = await supabase.from('profiles').select('pairing_code').eq('id', user.id).single()
+
+    if (!data?.pairing_code) {
+      await supabase.rpc('disconnect_partner')
+      setPartnerName(null)
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
       <div className="flex items-center gap-3">
@@ -47,6 +76,33 @@ export default function StreakPage() {
           <p className="text-sm text-neutral-400 dark:text-neutral-500">Your journey together</p>
         </div>
       </div>
+
+      {partnerDisconnected && (
+        <Card className="bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/30 dark:to-rose-950/30 border-red-200/50 dark:border-red-800/50">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/50 flex items-center justify-center">
+                <Users className="w-4 h-4 text-red-500" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-red-700 dark:text-red-300">
+                  Partner Disconnected!
+                </p>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">
+                  Your streak will reset when {partnerName || 'Partner'} disconnects. Share pairing code to reconnect.
+                </p>
+              </div>
+              <button
+                onClick={disconnectPartner}
+                className="p-2 rounded-lg bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors"
+                title="Disconnect Partner"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <div className="space-y-4 animate-pulse-soft">
@@ -65,6 +121,11 @@ export default function StreakPage() {
               </div>
               <p className="text-5xl font-bold text-neutral-900 dark:text-neutral-100">{daysTogether}</p>
               <p className="text-base text-neutral-500 dark:text-neutral-400 mt-2">days together</p>
+              {partnerName && (
+                <p className="text-sm text-neutral-400 dark:text-neutral-500 mt-1">
+                  with {partnerName}
+                </p>
+              )}
               <div className="flex items-center justify-center gap-1 mt-3">
                 {Array.from({ length: Math.min(daysTogether, 7) }).map((_, i) => (
                   <div key={i} className={`w-3 h-3 rounded-full ${i < 7 ? 'bg-orange-400' : 'bg-neutral-200 dark:bg-neutral-700'}`} />

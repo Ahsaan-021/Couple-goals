@@ -11,20 +11,23 @@ interface AuthContextType {
   loading: boolean
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
-}
+  partnerDisconnected: boolean
+ }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  profile: null,
-  loading: true,
-  signOut: async () => {},
-  refreshProfile: async () => {},
-})
+ const AuthContext = createContext<AuthContextType>({
+   user: null,
+   profile: null,
+   loading: true,
+   signOut: async () => {},
+   refreshProfile: async () => {},
+   partnerDisconnected: false,
+ })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [partnerDisconnected, setPartnerDisconnected] = useState(false)
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -47,7 +50,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const u = session?.user ?? null
       setUser(u)
       if (u) fetchProfile(u.id)
-      else setProfile(null)
+      else {
+        setProfile(null)
+        setPartnerDisconnected(true)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -64,7 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, signOut, refreshProfile, partnerDisconnected }}>
       {children}
     </AuthContext.Provider>
   )
